@@ -1,0 +1,209 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 920" font-family="'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.4" flood-color="#000"/>
+    </filter>
+    <filter id="inner-shadow" x="-3%" y="-3%" width="106%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.25" flood-color="#000"/>
+    </filter>
+    <marker id="arr" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="9" markerHeight="7" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+    </marker>
+    <marker id="arr-cyan" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="9" markerHeight="7" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#22d3ee"/>
+    </marker>
+    <marker id="arr-amber" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="9" markerHeight="7" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="9" markerHeight="7" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/>
+    </marker>
+    <marker id="arr-violet" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="9" markerHeight="7" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#a78bfa"/>
+    </marker>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="pipeline-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c4a6e"/>
+      <stop offset="100%" stop-color="#082f4a"/>
+    </linearGradient>
+    <linearGradient id="privileged-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#422006"/>
+      <stop offset="100%" stop-color="#2d1604"/>
+    </linearGradient>
+    <linearGradient id="server-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#052e16"/>
+      <stop offset="100%" stop-color="#031e0e"/>
+    </linearGradient>
+    <linearGradient id="public-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1c1a40"/>
+      <stop offset="100%" stop-color="#15132e"/>
+    </linearGradient>
+    <linearGradient id="recover-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3b0a0a"/>
+      <stop offset="100%" stop-color="#280707"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="720" height="920" fill="url(#bg)"/>
+
+  <text x="360" y="38" text-anchor="middle" font-size="20" font-weight="700" fill="#f1f5f9" letter-spacing="-0.3">Octopus — Universal Agentic Hardware Control</text>
+  <text x="360" y="58" text-anchor="middle" font-size="11" fill="#64748b">v4.5 · May 2026</text>
+
+  <rect x="240" y="80" width="240" height="40" rx="20" fill="#1e293b" stroke="#94a3b8" stroke-width="1" filter="url(#card-shadow)"/>
+  <text x="360" y="100" text-anchor="middle" font-size="12" font-weight="600" fill="#cbd5e1" font-family="monospace">curl | bash → install.sh</text>
+  <text x="360" y="113" text-anchor="middle" font-size="8" fill="#64748b">one shell command · ~25–35 min</text>
+
+  <line x1="360" y1="120" x2="360" y2="140" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- General pipeline -->
+  <rect x="40" y="140" width="640" height="118" rx="10" fill="url(#pipeline-fill)" stroke="#0ea5e9" stroke-width="1.2" stroke-opacity="0.55" filter="url(#inner-shadow)"/>
+  <text x="60" y="162" font-size="11" font-weight="700" fill="#7dd3fc" letter-spacing="0.3">GENERAL PIPELINE</text>
+  <text x="200" y="162" font-size="9" fill="#0ea5e9" opacity="0.8">— device-agnostic · 5 markdown specs</text>
+
+  <rect x="60" y="178" width="116" height="64" rx="8" fill="#082f4a" stroke="#22d3ee" stroke-width="1.2"/>
+  <text x="118" y="200" text-anchor="middle" font-size="12" font-weight="700" fill="#7dd3fc">PROBE</text>
+  <text x="118" y="216" text-anchor="middle" font-size="8" fill="#bae6fd" font-family="monospace">probe.md</text>
+  <text x="118" y="230" text-anchor="middle" font-size="8" fill="#38bdf8">enumerate hw</text>
+
+  <line x1="176" y1="210" x2="194" y2="210" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+
+  <rect x="194" y="178" width="116" height="64" rx="8" fill="#082f4a" stroke="#22d3ee" stroke-width="1.2"/>
+  <text x="252" y="200" text-anchor="middle" font-size="12" font-weight="700" fill="#7dd3fc">IDENTIFY</text>
+  <text x="252" y="216" text-anchor="middle" font-size="8" fill="#bae6fd" font-family="monospace">identify.md</text>
+  <text x="252" y="230" text-anchor="middle" font-size="8" fill="#38bdf8">capabilities</text>
+
+  <line x1="310" y1="210" x2="328" y2="210" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+
+  <rect x="328" y="178" width="116" height="64" rx="8" fill="#082f4a" stroke="#22d3ee" stroke-width="1.2"/>
+  <text x="386" y="200" text-anchor="middle" font-size="12" font-weight="700" fill="#7dd3fc">INTERFACE</text>
+  <text x="386" y="216" text-anchor="middle" font-size="8" fill="#bae6fd" font-family="monospace">interface.md</text>
+  <text x="386" y="230" text-anchor="middle" font-size="8" fill="#38bdf8">MCP schemas</text>
+
+  <line x1="444" y1="210" x2="462" y2="210" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+
+  <rect x="462" y="178" width="100" height="64" rx="8" fill="#082f4a" stroke="#22d3ee" stroke-width="1.2"/>
+  <text x="512" y="200" text-anchor="middle" font-size="12" font-weight="700" fill="#7dd3fc">SERVE</text>
+  <text x="512" y="216" text-anchor="middle" font-size="8" fill="#bae6fd" font-family="monospace">serve.md</text>
+  <text x="512" y="230" text-anchor="middle" font-size="8" fill="#38bdf8">FastMCP</text>
+
+  <line x1="562" y1="210" x2="580" y2="210" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+
+  <rect x="580" y="178" width="80" height="64" rx="8" fill="#082f4a" stroke="#22d3ee" stroke-width="1.2"/>
+  <text x="620" y="200" text-anchor="middle" font-size="12" font-weight="700" fill="#7dd3fc">DEPLOY</text>
+  <text x="620" y="216" text-anchor="middle" font-size="8" fill="#bae6fd" font-family="monospace">deploy.md</text>
+  <text x="620" y="230" text-anchor="middle" font-size="8" fill="#38bdf8">:7777/mcp</text>
+
+  <line x1="360" y1="258" x2="360" y2="278" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-cyan)"/>
+
+  <!-- Privileged steps -->
+  <rect x="40" y="278" width="400" height="124" rx="10" fill="url(#privileged-fill)" stroke="#f59e0b" stroke-width="1.2" stroke-opacity="0.55" filter="url(#inner-shadow)"/>
+  <text x="60" y="300" font-size="11" font-weight="700" fill="#fbbf24" letter-spacing="0.3">PRIVILEGED STEPS</text>
+  <text x="200" y="300" font-size="9" fill="#f59e0b" opacity="0.8">— conditional · demo-critical</text>
+
+  <rect x="60" y="316" width="180" height="74" rx="8" fill="#2d1604" stroke="#f59e0b" stroke-width="1.2"/>
+  <text x="150" y="338" text-anchor="middle" font-size="12" font-weight="700" fill="#fbbf24">PERCEIVE</text>
+  <text x="150" y="352" text-anchor="middle" font-size="8" fill="#fde68a" font-family="monospace">perceive.md</text>
+  <text x="150" y="368" text-anchor="middle" font-size="9" fill="#fbbf24">camera + rail subsystem</text>
+  <text x="150" y="382" text-anchor="middle" font-size="8" fill="#d97706">capture.py · rail_move_*</text>
+
+  <rect x="252" y="316" width="180" height="74" rx="8" fill="#2d1604" stroke="#f59e0b" stroke-width="1.2"/>
+  <text x="342" y="338" text-anchor="middle" font-size="12" font-weight="700" fill="#fbbf24">ARM</text>
+  <text x="342" y="352" text-anchor="middle" font-size="8" fill="#fde68a" font-family="monospace">arm.md</text>
+  <text x="342" y="368" text-anchor="middle" font-size="9" fill="#fbbf24">SO-ARM101 verify/repair</text>
+  <text x="342" y="382" text-anchor="middle" font-size="8" fill="#d97706">scservo_sdk · per-servo writes</text>
+
+  <!-- Daemon -->
+  <rect x="460" y="278" width="220" height="124" rx="10" fill="url(#privileged-fill)" stroke="#f59e0b" stroke-width="1.2" stroke-opacity="0.55" filter="url(#inner-shadow)"/>
+  <text x="480" y="300" font-size="11" font-weight="700" fill="#fbbf24" letter-spacing="0.3">DAEMON</text>
+  <text x="540" y="300" font-size="9" fill="#f59e0b" opacity="0.8">— living backend</text>
+
+  <rect x="480" y="316" width="92" height="74" rx="8" fill="#2d1604" stroke="#f59e0b" stroke-width="1.2"/>
+  <text x="526" y="338" text-anchor="middle" font-size="12" font-weight="700" fill="#fbbf24">WATCH</text>
+  <text x="526" y="354" text-anchor="middle" font-size="8" fill="#d97706">tail logs</text>
+  <text x="526" y="368" text-anchor="middle" font-size="8" fill="#d97706">read frame</text>
+  <text x="526" y="382" text-anchor="middle" font-size="7" fill="#92400e">classify</text>
+
+  <line x1="572" y1="354" x2="588" y2="354" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+
+  <rect x="588" y="316" width="80" height="74" rx="8" fill="#2d1604" stroke="#f59e0b" stroke-width="1.2"/>
+  <text x="628" y="338" text-anchor="middle" font-size="12" font-weight="700" fill="#fbbf24">HEAL</text>
+  <text x="628" y="354" text-anchor="middle" font-size="8" fill="#d97706">install</text>
+  <text x="628" y="368" text-anchor="middle" font-size="8" fill="#d97706">patch</text>
+  <text x="628" y="382" text-anchor="middle" font-size="7" fill="#92400e">restart</text>
+
+  <!-- MCP server -->
+  <rect x="180" y="430" width="360" height="68" rx="10" fill="url(#server-fill)" stroke="#10b981" stroke-width="1.5" filter="url(#inner-shadow)"/>
+  <text x="360" y="456" text-anchor="middle" font-size="13" font-weight="700" fill="#34d399">MCP SERVER (FastMCP)</text>
+  <text x="360" y="472" text-anchor="middle" font-size="10" fill="#6ee7b7" font-family="monospace">http://localhost:7777/mcp</text>
+  <text x="360" y="486" text-anchor="middle" font-size="9" fill="#10b981">~16–30 typed hardware tools</text>
+
+  <!-- Privileged → server (vertical, doesn't cross other boxes) -->
+  <line x1="150" y1="390" x2="240" y2="430" stroke="#f59e0b" stroke-width="1.4" stroke-dasharray="3,3" marker-end="url(#arr-amber)" stroke-opacity="0.7"/>
+  <line x1="342" y1="390" x2="360" y2="430" stroke="#f59e0b" stroke-width="1.4" stroke-dasharray="3,3" marker-end="url(#arr-amber)" stroke-opacity="0.7"/>
+
+  <!-- Server → watch (server feeds the daemon) — polyline ⌐ shape, clear tangent up -->
+  <path d="M 540 460 L 580 460 L 580 410 L 526 410 L 526 390" stroke="#10b981" stroke-width="1.4" stroke-dasharray="3,3" fill="none" marker-end="url(#arr-amber)" stroke-opacity="0.7"/>
+
+  <!-- Heal → server (fix in place) — polyline ⌐ shape, terminates with clear horizontal tangent left -->
+  <path d="M 668 390 L 700 390 L 700 460 L 540 460" stroke="#f59e0b" stroke-width="1.4" fill="none" marker-end="url(#arr-amber)"/>
+  <text x="695" y="408" text-anchor="end" font-size="8" fill="#fbbf24" font-style="italic">fix in place</text>
+
+  <!-- Reprobe box (Plan 21 Phase G) -->
+  <rect x="40" y="430" width="120" height="68" rx="10" fill="url(#recover-fill)" stroke="#ef4444" stroke-width="1.5" filter="url(#inner-shadow)"/>
+  <text x="100" y="450" text-anchor="middle" font-size="11" font-weight="700" fill="#fca5a5">device_moved</text>
+  <text x="100" y="464" text-anchor="middle" font-size="9" fill="#fca5a5" font-family="monospace">reprobe</text>
+  <text x="100" y="478" text-anchor="middle" font-size="8" fill="#f87171">↻ re-runs probe + identify</text>
+  <text x="100" y="490" text-anchor="middle" font-size="7" fill="#dc2626">+ perceive + arm · skip serve</text>
+
+  <!-- Heal → reprobe — clean polyline: down past server bottom, left across gutter, up
+       into reprobe's bottom-center. Final tangent is straight up so the arrowhead is
+       unambiguous. Heal bottom (628,390) → (628,520) → (100,520) → (100,498) [reprobe bottom-center]. -->
+  <path d="M 628 390 L 628 520 L 100 520 L 100 498" stroke="#ef4444" stroke-width="1.4" stroke-dasharray="3,3" fill="none" marker-end="url(#arr-red)" stroke-opacity="0.9"/>
+  <text x="370" y="514" text-anchor="middle" font-size="8" fill="#fca5a5" font-style="italic">classify · auto-trigger</text>
+
+  <!-- Server → expose: implicit (boxes are stacked vertically); no explicit arrow to keep
+       the heal→reprobe path uncluttered through the y=520 gutter. -->
+
+
+  <!-- Public surface -->
+  <rect x="40" y="528" width="640" height="184" rx="10" fill="url(#public-fill)" stroke="#8b5cf6" stroke-width="1.5" stroke-opacity="0.55" filter="url(#card-shadow)"/>
+  <text x="60" y="552" font-size="11" font-weight="700" fill="#a78bfa" letter-spacing="0.3">PUBLIC SURFACE</text>
+  <text x="172" y="552" font-size="10" fill="#a78bfa" opacity="0.7">— localhost → public HTTPS in one command</text>
+
+  <rect x="60" y="566" width="290" height="128" rx="8" fill="#15132e" stroke="#a78bfa" stroke-width="1.2"/>
+  <text x="205" y="592" text-anchor="middle" font-size="13" font-weight="700" fill="#a78bfa" font-family="monospace">octopus expose</text>
+  <text x="205" y="610" text-anchor="middle" font-size="9" fill="#c4b5fd">cloudflared quick-tunnel</text>
+  <text x="205" y="626" text-anchor="middle" font-size="9" fill="#c4b5fd">auto-runs at end of install</text>
+  <text x="205" y="648" text-anchor="middle" font-size="10" fill="#c4b5fd" font-family="monospace">https://&lt;random&gt;</text>
+  <text x="205" y="662" text-anchor="middle" font-size="10" fill="#c4b5fd" font-family="monospace">.trycloudflare.com/mcp</text>
+  <text x="205" y="682" text-anchor="middle" font-size="8" fill="#7c3aed">--no-tunnel to skip</text>
+
+  <line x1="350" y1="630" x2="370" y2="630" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arr-violet)"/>
+
+  <rect x="370" y="566" width="290" height="128" rx="8" fill="#15132e" stroke="#a78bfa" stroke-width="1.2"/>
+  <text x="515" y="592" text-anchor="middle" font-size="13" font-weight="700" fill="#a78bfa">MCP CLIENTS</text>
+  <text x="515" y="612" text-anchor="middle" font-size="10" fill="#c4b5fd">Claude Desktop</text>
+  <text x="515" y="628" text-anchor="middle" font-size="10" fill="#c4b5fd">OpenClaw</text>
+  <text x="515" y="644" text-anchor="middle" font-size="10" fill="#c4b5fd">Join39 bridge</text>
+  <text x="515" y="664" text-anchor="middle" font-size="9" fill="#8b5cf6">closed visual-motor loop</text>
+  <text x="515" y="678" text-anchor="middle" font-size="8" fill="#7c3aed">command → motion → frame</text>
+
+  <!-- Bottom legend -->
+  <rect x="40" y="730" width="640" height="148" rx="10" fill="#0b1220" stroke="#475569" stroke-width="1" stroke-dasharray="4,3" filter="url(#inner-shadow)"/>
+  <text x="60" y="752" font-size="11" font-weight="700" fill="#e2e8f0" letter-spacing="0.3">RALPH</text>
+  <text x="106" y="752" font-size="9" fill="#94a3b8">— Read · Agent · Loop · Pass · only control structure (Huntley-credit)</text>
+  <text x="60" y="770" font-size="11" font-weight="700" fill="#e2e8f0" letter-spacing="0.3">Markov state</text>
+  <text x="148" y="770" font-size="9" fill="#94a3b8">— each iteration sees prior output only · bounded context</text>
+  <text x="60" y="788" font-size="11" font-weight="700" fill="#e2e8f0" letter-spacing="0.3">Two faces of self-reference</text>
+  <text x="222" y="788" font-size="9" fill="#94a3b8">— daemon watches own logs · camera watches arm</text>
+  <text x="60" y="806" font-size="11" font-weight="700" fill="#e2e8f0" letter-spacing="0.3">10 OpenRouter models</text>
+  <text x="210" y="806" font-size="9" fill="#94a3b8">— Sonnet 4.6 · Kimi K2.6 · Gemini 3 Flash · ... (Plan 22)</text>
+  <text x="60" y="836" font-size="9" fill="#475569" font-style="italic">Demo: Pi 4 · SO-ARM101 · LifeCam · stepper rail. ~30 min curl|bash → arm physically moves on agent command.</text>
+  <text x="60" y="854" font-size="9" fill="#475569" font-style="italic">github.com/qsimeon/octopus-hw · qsimeon.github.io/octopus-hw · MIT MAS.664 Spring 2026</text>
+
+  <text x="360" y="900" text-anchor="middle" font-size="8" fill="#475569" font-style="italic">canonical: docs/system-diagrams/architecture-simple.svg · hand-crafted v4.5</text>
+
+</svg>

@@ -1,0 +1,40 @@
+{
+  "name": "octopus-hardware",
+  "displayName": "Octopus Hardware Control",
+  "description": "Universal hardware control platform. Octopus auto-discovers hardware connected to a computer (robotic arms, cameras, GPIO, sensors, actuators) and generates an MCP API for controlling them. Use action=list to see available tools, action=invoke to call any tool.",
+  "version": "4.0.0",
+  "category": "utilities",
+  "apiEndpoint": "https://mellow-miracle-production-b572.up.railway.app/tools/invoke",
+  "httpMethod": "POST",
+  "auth": {
+    "type": "none"
+  },
+  "functionDefinition": {
+    "name": "octopus-hardware",
+    "description": "Control real hardware through the Octopus MCP bridge. Two modes:\n1. List tools: pass {\"action\": \"list\"} to see all available hardware tools\n2. Invoke tool: pass {\"action\": \"invoke\", \"tool_name\": \"...\", \"parameters\": {...}} to control hardware\n\nAlways call with action=list first to get current tool names — they vary by hardware configuration. Example tools: arm_set_joint_angle, usb_camera_capture_image, gpio_set_gpio_state, wifi_scan_wifi_networks.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["list", "invoke"],
+          "description": "list = show available tools; invoke = call a specific tool"
+        },
+        "tool_name": {
+          "type": "string",
+          "description": "Tool to invoke (required when action=invoke). Get names from action=list."
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Parameters for the tool (required when action=invoke). Structure depends on the tool.",
+          "additionalProperties": true
+        }
+      },
+      "required": ["action"]
+    }
+  },
+  "responseMapping": {
+    "resultPath": "result",
+    "errorPath": "error"
+  }
+}

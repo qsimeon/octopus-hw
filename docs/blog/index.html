@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>The Coding Agent Is the Software — Introducing Octopus</title>
+<link rel="canonical" href="https://qsimeon.github.io/octopus-hw/blog/"/>
+<link rel="icon" href="../octopus-logo-1.png"/>
+<meta name="description" content="Octopus turns any device into an agent-controllable MCP server. The coding agent IS the software."/>
+<meta property="og:title" content="The Coding Agent Is the Software — Introducing Octopus"/>
+<meta property="og:description" content="Octopus turns any device into an agent-controllable MCP server, at install time, on whatever hardware happens to be plugged in."/>
+<meta property="og:image" content="https://qsimeon.github.io/octopus-hw/demo-frames/rig-full.jpeg"/>
+<meta property="og:url" content="https://qsimeon.github.io/octopus-hw/blog/"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://qsimeon.github.io/octopus-hw/demo-frames/rig-full.jpeg"/>
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   Octopus Blog — design tokens
+   Inherits from qsimeon.github.io/octopus-hw (dark, cyan accent)
+   No external font CDN — system fonts only, offline-able
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg:       #0a0a0a;
+  --bg-1:     #111111;
+  --bg-2:     #161616;
+  --border:   #1e1e1e;
+  --border-2: #2a2a2a;
+  --ink:      #ededed;
+  --ink-2:    #a8a8a8;
+  --ink-3:    #6b6b6b;
+  --ink-4:    #3d3d3d;
+  --accent:   #7dd3fc;
+  --accent-hi:#bae6fd;
+  --accent-ink:#031018;
+  --amber:    #fbbf24;
+  --amber-dim:#92400e;
+  --green:    #6ee7b7;
+  --green-dim:#065f46;
+  --violet:   #a78bfa;
+  --violet-dim:#3b0764;
+  --red:      #fca5a5;
+  --red-dim:  #7f1d1d;
+  --col:      min(720px, 100%);
+  --wide:     min(1000px, 100%);
+  --pad:      clamp(18px, 4vw, 32px);
+  --mono:     'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans:     'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--bg); scroll-behavior: smooth; }
+body {
+  margin: 0; padding: 0;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--sans); font-size: 17px; line-height: 1.72;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+::selection { background: rgba(125,211,252,.28); color: var(--ink); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-hi); text-decoration: underline; }
+img { max-width: 100%; height: auto; display: block; }
+code {
+  font-family: var(--mono); font-size: 0.82em;
+  background: var(--bg-1); border: 1px solid var(--border);
+  padding: 1px 6px; border-radius: 4px; color: var(--accent);
+}
+
+.col { max-width: var(--col); margin: 0 auto; padding: 0 var(--pad); }
+.wide { max-width: var(--wide); margin: 0 auto; padding: 0 var(--pad); }
+
+/* ─── Nav ─── */
+nav {
+  position: sticky; top: 0; z-index: 20;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  background: rgba(10,10,10,.78); border-bottom: 1px solid var(--border);
+}
+nav .inner {
+  max-width: var(--wide); margin: 0 auto; padding: 0 var(--pad);
+  display: flex; align-items: center; justify-content: space-between;
+  height: 52px; font-size: 14px;
+}
+nav .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; color: var(--ink); letter-spacing: -.01em; }
+nav .brand img { width: 20px; height: 20px; filter: invert(1); opacity: .9; }
+nav .links { display: flex; gap: 20px; color: var(--ink-2); }
+nav .links a { color: var(--ink-2); text-decoration: none; }
+nav .links a:hover { color: var(--ink); text-decoration: none; }
+@media (max-width: 540px) { nav .links a:not(:last-child) { display: none; } }
+
+/* ─── Hero ─── */
+.hero {
+  padding: clamp(64px, 12vw, 140px) 0 clamp(48px, 8vw, 80px);
+  position: relative;
+}
+.hero::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(60% 50% at 50% 0%, rgba(125,211,252,.08), transparent 70%);
+  pointer-events: none;
+}
+.hero .col { position: relative; }
+.hero .eyebrow {
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-2); display: block; margin-bottom: 20px;
+}
+.hero h1 {
+  font-size: clamp(36px, 6.5vw, 62px); line-height: 1.06; letter-spacing: -.035em;
+  font-weight: 700; margin: 0 0 28px; max-width: 17ch;
+}
+.hero h1 em {
+  font-style: italic; font-weight: 400; color: var(--accent); letter-spacing: -.02em;
+}
+.hero .subtitle {
+  font-size: clamp(17px, 1.8vw, 20px); color: var(--ink-2);
+  max-width: 56ch; line-height: 1.55; margin: 0 0 32px;
+}
+.hero .ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 20px; border-radius: 6px; font-weight: 600; font-size: 14.5px;
+  border: 1px solid transparent; cursor: pointer; font-family: inherit;
+  text-decoration: none; transition: background .12s, transform .06s;
+}
+.btn:hover { text-decoration: none; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-hi); color: var(--accent-ink); }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--border-2); }
+.btn-ghost:hover { background: var(--bg-1); border-color: var(--ink-3); color: var(--ink); }
+.hero .meta {
+  font-family: var(--mono); font-size: 12px; color: var(--ink-3);
+  display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+}
+.hero .meta .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--ink-4); }
+.hero .cursor-blink::after {
+  content: "▌"; color: var(--accent); margin-left: 2px;
+  animation: blink 1.05s steps(2,start) infinite; opacity: .8;
+}
+@keyframes blink { to { opacity: 0; } }
+
+/* ─── Article ─── */
+article { padding-bottom: 80px; }
+article h2 {
+  font-size: clamp(26px, 3.5vw, 36px); line-height: 1.1; letter-spacing: -.025em;
+  font-weight: 700; margin: clamp(56px, 8vw, 96px) 0 20px;
+  padding-top: 44px; border-top: 1px solid var(--border);
+}
+article h2:first-of-type { border-top: 0; padding-top: 0; margin-top: 48px; }
+article h3 { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 36px 0 12px; color: var(--ink); }
+article p { margin: 0 0 18px; color: var(--ink-2); text-wrap: pretty; }
+article p strong, article li strong { color: var(--ink); font-weight: 600; }
+article blockquote {
+  margin: 28px 0; padding: 18px 22px;
+  border-left: 3px solid var(--accent); background: rgba(125,211,252,.04);
+  border-radius: 0 8px 8px 0; color: var(--ink-2); font-size: 16px;
+}
+article blockquote p { margin: 0; }
+article blockquote p + p { margin-top: 12px; }
+article ul, article ol { color: var(--ink-2); padding-left: 24px; margin: 0 0 18px; }
+article li { margin-bottom: 6px; }
+
+/* ─── Code blocks ─── */
+pre.cb {
+  background: var(--bg-1); border: 1px solid var(--border-2); border-radius: 8px;
+  padding: 20px 22px; font-family: var(--mono); font-size: 13px; line-height: 1.6;
+  color: var(--ink-2); overflow-x: auto; margin: 22px 0 24px;
+}
+pre.cb .c { color: var(--ink-3); }
+pre.cb .k { color: var(--accent); }
+pre.cb .s { color: var(--green); }
+pre.cb .h { color: var(--ink); font-weight: 500; }
+pre.cb .a { color: var(--amber); }
+
+/* ─── Three trends ─── */
+.trends {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  margin: 28px 0 32px;
+}
+@media (max-width: 760px) { .trends { grid-template-columns: 1fr; } }
+.trend-card {
+  background: var(--bg-1); border: 1px solid var(--border-2); border-radius: 8px;
+  padding: 24px 22px; position: relative;
+}
+.trend-card .n {
+  font-family: var(--mono); font-size: 48px; font-weight: 700;
+  color: var(--ink-4); line-height: 1; margin-bottom: 12px; letter-spacing: -.04em;
+}
+.trend-card h4 { font-size: 16px; font-weight: 600; margin: 0 0 8px; letter-spacing: -.01em; }
+.trend-card p { font-size: 14px; color: var(--ink-2); margin: 0; line-height: 1.55; }
+
+/* ─── Pivot ─── */
+.pivot {
+  padding: clamp(48px, 7vw, 80px) 0;
+  text-align: center;
+}
+.pivot p {
+  font-size: clamp(24px, 3.5vw, 36px); font-weight: 700;
+  letter-spacing: -.025em; line-height: 1.15;
+  color: var(--ink); max-width: 22ch; margin: 0 auto;
+}
+.pivot p em { font-style: italic; font-weight: 400; color: var(--accent); }
+
+/* ─── Architecture diagram ─── */
+.arch-svg-wrap {
+  margin: 28px 0 32px;
+  background: var(--bg-1); border: 1px solid var(--border-2); border-radius: 8px;
+  padding: clamp(16px, 3vw, 28px);
+  overflow-x: auto;
+}
+.arch-svg-wrap svg { width: 100%; height: auto; min-width: 680px; }
+.arch-svg-wrap svg text { font-family: var(--sans); }
+.arch-svg-wrap svg .mono-t { font-family: var(--mono); }
+
+/* ─── Step cards (install walkthrough) ─── */
+.step-cards { display: flex; flex-direction: column; gap: 0; margin: 28px 0 32px; position: relative; }
+.step-cards::before {
+  content: ""; position: absolute; left: 19px; top: 0; bottom: 0;
+  width: 2px; background: var(--border-2);
+}
+@media (max-width: 600px) { .step-cards::before { left: 15px; } }
+.step-card {
+  display: grid; grid-template-columns: 40px 1fr; gap: 16px;
+  padding: 18px 0; position: relative;
+}
+.step-card .dot-wrap {
+  display: flex; align-items: flex-start; justify-content: center; padding-top: 2px;
+}
+.step-card .dot-wrap .dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--bg);
+  position: relative; z-index: 1;
+}
+.step-card .dot-wrap .dot.amber { background: var(--amber); }
+.step-card .dot-wrap .dot.green { background: var(--green); }
+.step-card .dot-wrap .dot.violet { background: var(--violet); }
+.step-card h4 { font-size: 16px; font-weight: 600; margin: 0 0 6px; letter-spacing: -.01em; }
+.step-card p { font-size: 14.5px; color: var(--ink-2); margin: 0 0 6px; line-height: 1.55; }
+.step-card .tag {
+  display: inline-block; font-family: var(--mono); font-size: 11px;
+  letter-spacing: .06em; padding: 3px 8px; border-radius: 4px;
+  border: 1px solid var(--border-2); color: var(--ink-3); margin-top: 4px;
+}
+
+/* ─── Principle cards ─── */
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin: 24px 0 28px; }
+.pr-card {
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
+  padding: 22px 20px; transition: border-color .2s;
+}
+.pr-card:hover { border-color: var(--border-2); }
+.pr-card .n { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: .1em; margin-bottom: 8px; }
+.pr-card h4 { font-size: 15.5px; font-weight: 600; margin: 0 0 8px; letter-spacing: -.01em; }
+.pr-card p { font-size: 13.5px; color: var(--ink-2); margin: 0; line-height: 1.55; }
+.pr-card a { font-size: 13px; }
+
+/* ─── Not-list ─── */
+.not-list { display: flex; flex-direction: column; gap: 12px; margin: 24px 0 28px; }
+.not-item {
+  display: grid; grid-template-columns: 32px 1fr; gap: 14px; align-items: start;
+  padding: 16px 18px;
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
+}
+.not-item .x { font-family: var(--mono); font-size: 16px; color: var(--red); font-weight: 700; flex-shrink: 0; text-align: center; }
+.not-item p { margin: 0; font-size: 14.5px; color: var(--ink-2); line-height: 1.55; }
+.not-item p strong { color: var(--ink); }
+
+/* ─── Install block ─── */
+.install-block {
+  background: var(--bg-1); border: 1px solid var(--border-2); border-radius: 8px;
+  padding: clamp(24px, 4vw, 40px); margin: 32px 0;
+}
+.install-block h3 { margin-top: 0; }
+.cmd-line {
+  display: flex; gap: 10px; align-items: center;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 12px 14px; font-family: var(--mono); font-size: 13px; color: var(--ink); margin: 10px 0;
+}
+.cmd-line .p { color: var(--ink-4); user-select: none; }
+.cmd-line .body { flex: 1; overflow-x: auto; white-space: nowrap; }
+.cmd-line .body .a { color: var(--accent); }
+.cmd-line .body .c { color: var(--ink-3); }
+.checklist { list-style: none; padding: 0; margin: 16px 0 0; }
+.checklist li { padding: 4px 0; font-size: 14.5px; color: var(--ink-2); }
+.checklist li::before { content: "✓ "; color: var(--green); font-weight: 600; }
+
+/* ─── Figure ─── */
+figure.bf {
+  margin: 32px 0; background: var(--bg-1); border: 1px solid var(--border-2);
+  border-radius: 8px; overflow: hidden;
+}
+figure.bf img { width: 100%; aspect-ratio: 16/9; object-fit: cover; object-position: center 38%; }
+figure.bf.sq img { aspect-ratio: 4/3; }
+figure.bf figcaption {
+  padding: 14px 18px; font-size: 13px; color: var(--ink-3); font-family: var(--mono);
+  line-height: 1.55; border-top: 1px solid var(--border);
+}
+
+/* ─── Callout ─── */
+.callout {
+  margin: 28px 0; padding: 20px 22px;
+  background: rgba(125,211,252,.04); border: 1px solid rgba(125,211,252,.15); border-radius: 8px;
+}
+.callout p { margin: 0; font-size: 15px; }
+.callout .label {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
+}
+
+/* ─── Footer ─── */
+footer {
+  border-top: 1px solid var(--border); padding: 40px 0 56px; font-size: 14px; color: var(--ink-3);
+}
+footer .col {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+}
+@media (max-width: 600px) { footer .col { grid-template-columns: 1fr; } }
+footer a { color: var(--ink-2); text-decoration: none; }
+footer a:hover { color: var(--ink); }
+footer .foot-links { display: flex; flex-direction: column; gap: 6px; }
+footer .foot-links a { font-size: 14px; }
+
+/* ─── Reveal ─── */
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease-out, transform .5s ease-out; }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+/* ─── RALPH loop inline diagram ─── */
+.ralph-loop {
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  margin: 24px 0 28px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 13px;
+}
+.ralph-loop .step {
+  padding: 10px 18px; border: 1px solid var(--border-2);
+  background: var(--bg-1); color: var(--ink);
+  font-weight: 600; letter-spacing: -.01em;
+}
+.ralph-loop .step:first-child { border-radius: 6px 0 0 6px; }
+.ralph-loop .step:last-child { border-radius: 0 6px 6px 0; }
+.ralph-loop .arr { color: var(--ink-4); padding: 0 4px; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a href="https://qsimeon.github.io/octopus-hw/" class="brand">
+      <img src="../octopus-logo-1.png" alt=""/>
+      <span>Octopus</span>
+    </a>
+    <div class="links">
+      <a href="#architecture">Architecture</a>
+      <a href="#principles">Principles</a>
+      <a href="#install">Try it</a>
+      <a href="https://github.com/qsimeon/octopus-hw">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<header class="hero">
+  <div class="col">
+    <span class="eyebrow">Technical deep dive · May 2026</span>
+    <h1>The coding agent <em>is the software.</em></h1>
+    <p class="subtitle">You don't ship code. You ship an agent that figures out how to write the code. Octopus turns any device into an agent-controllable MCP server — at install time, on whatever hardware happens to be plugged in.</p>
+    <div class="ctas">
+      <a class="btn btn-primary" href="#install">Try it →</a>
+      <a class="btn btn-ghost" href="https://github.com/qsimeon/octopus-hw">GitHub</a>
+    </div>
+    <div class="meta">
+      <span>Quilee Simeon · Yile Fan · Minggan Wei</span>
+      <span class="dot"></span>
+      <span>MIT MAS.664</span>
+      <span class="dot"></span>
+      <span>~3,500 words<span class="cursor-blink"></span></span>
+    </div>
+  </div>
+</header>
+
+<article>
+
+<!-- ═══════════════ THREE TRENDS ═══════════════ -->
+<div class="col">
+<h2>Three trends converging</h2>
+<p>Three things became true at roughly the same time. Their intersection is the gap Octopus fills.</p>
+</div>
+
+<div class="wide">
+  <div class="trends reveal">
+    <div class="trend-card">
+      <div class="n">1</div>
+      <h4>Everything got a microcontroller</h4>
+      <p>Appliances, lab gear, teaching arms, grow-tents, CNC mills — anything with a USB port or GPIO header is now computerized. The long tail of controllable devices is enormous and growing.</p>
+    </div>
+    <div class="trend-card">
+      <div class="n">2</div>
+      <h4>Coding agents got good at computer-use</h4>
+      <p>Web search, datasheet lookup, tool calls, platform-specific code generation — agents can now read a device wiki and write a working driver in the time it takes to brew coffee.</p>
+    </div>
+    <div class="trend-card">
+      <div class="n">3</div>
+      <h4>Software wrapped itself for agents</h4>
+      <p>Every SaaS company is shipping MCP servers so AI agents can drive their product. Stripe, Linear, Notion, GitHub — the software world is agent-ready. Hardware hasn't caught up.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ THE PIVOT ═══════════════ -->
+<div class="pivot">
+  <p>Hardware hasn't caught the MCP explosion yet.<br/><em>That's the gap.</em></p>
+</div>
+
+<!-- ═══════════════ THE IDEA ═══════════════ -->
+<div class="col">
+
+<h2>Two ideas, both simple</h2>
+
+<p><strong>The coding agent is the software.</strong> Like an OS is the runtime for applications, a coding agent is the runtime for specs &mdash; a new kind of operating system for an agentic, living backend. You don't write platform-specific code; you write a markdown specification and the agent figures out the implementation. Same spec → different code on Mac vs Pi vs Windows.</p>
+
+<p><strong>Prompts are the protocol.</strong> The five markdown files in <code>protocol/</code> aren't configuration &mdash; they're the program. An <strong>A</strong>gent reads the <strong>S</strong>pecs and acts on the <strong>P</strong>latform in front of it. What comes out &mdash; the running, agent-callable hardware &mdash; is what we call <strong>I</strong>nfrastructure.</p>
+
+<p style="font-family:var(--mono);font-size:18px;letter-spacing:0.04em;margin:6px 0 18px;color:var(--ink)">I = A(S, P)</p>
+
+<p>Together: <code>install.sh</code> drops the coding agent and the protocol on any machine. The agent reads the specs, discovers your hardware, builds an MCP server. The infrastructure isn't shipped &mdash; it emerges from the agent acting on the specs and the platform in front of it. Any AI can now control your devices.</p>
+
+<blockquote>
+  <p>Drop one shell command on a Pi or Mac. ~25 minutes later, every connected peripheral — arm, camera, sensor, GPIO pin — is a typed, agent-callable MCP tool. The agent reads five markdown protocol specs, probes USB / serial / I²C / GPIO, identifies what's plugged in, looks up datasheets, writes a FastMCP server tailored to that exact machine, and exposes a Cloudflare HTTPS tunnel. Same five specs work on a Mac with a completely different discovered tool set.</p>
+</blockquote>
+
+</div>
+
+<!-- ═══════════════ RIG VIDEO ═══════════════ -->
+<div class="wide">
+  <figure class="bf sq reveal">
+    <video autoplay loop muted playsinline preload="metadata"
+           poster="../demo-frames/rig-full.jpeg"
+           style="width:100%;display:block;border-radius:6px;background:#000">
+      <source src="../demo-frames/rig-motion-blog.mp4" type="video/mp4">
+      <img src="../demo-frames/rig-full.jpeg" alt="The Octopus reference rig"/>
+    </video>
+    <figcaption>The reference rig: 6-DOF SO-ARM101 (Feetech STS3215 servos, 1 Mbaud serial), LifeCam Studio, Raspberry Pi 4 — and a USB camera on a motorized rail panning around the arm. Every motion is an MCP tool call. No human-written hardware code.</figcaption>
+  </figure>
+</div>
+
+<!-- ═══════════════ ARCHITECTURE ═══════════════ -->
+<div class="col" id="architecture">
+<h2>System architecture</h2>
+<p>Five general specs drive the pipeline. Two privileged framework steps handle demo-critical hardware. A watch/heal daemon keeps the server alive. One command makes it public.</p>
+</div>
+
+<div class="wide">
+  <figure class="bf reveal arch-fig">
+    <img src="../system-diagrams/architecture-simple.svg" alt="Octopus architecture diagram"
+         style="width:100%;height:auto;aspect-ratio:auto;object-fit:contain;display:block;border-radius:6px;background:#0a0a0a;padding:32px;max-height:none"/>
+    <figcaption><code>curl | bash</code> → general pipeline → privileged steps → daemon → MCP server → reprobe path → public surface. Eight named blocks, no orchestration code beyond the RALPH loop.</figcaption>
+  </figure>
+</div>
+
+
+<!-- ═══════════════ INSTALL WALKTHROUGH ═══════════════ -->
+<div class="col">
+
+<h2>How a single install actually flows</h2>
+
+<p>A user exports an <code>OPENROUTER_API_KEY</code> and runs the one-liner. Here's what happens in the ~25 minutes that follow.</p>
+
+<div class="step-cards">
+  <div class="step-card">
+    <div class="dot-wrap"><div class="dot"></div></div>
+    <div>
+      <h4>PROBE — "What's plugged in?"</h4>
+      <p>The agent detects the OS, runs platform-appropriate discovery (<code>lsusb</code> on Linux, <code>system_profiler</code> on macOS), and writes a JSON manifest of every hardware device it finds. USB, serial, I²C, GPIO, Bluetooth, Wi-Fi — cast a wide net, trim later.</p>
+      <span class="tag">probe.md → _generated/probe/output.json</span>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="dot-wrap"><div class="dot"></div></div>
+    <div>
+      <h4>IDENTIFY — "What can it do?"</h4>
+      <p>The agent reads the probe output and figures out each device's product, SDK, and capabilities. It uses vendor/product IDs, driver names, and — critically — <strong>web search</strong>. It'll find the SeeedStudio wiki, the Feetech datasheet, the <code>scservo_sdk</code> Python package. The chip ID names the adapter; the agent identifies the product.</p>
+      <span class="tag">identify.md → _generated/identify/output.json</span>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="dot-wrap"><div class="dot"></div></div>
+    <div>
+      <h4>INTERFACE — "Make MCP tools."</h4>
+      <p>One tool per capability. <code>arm_set_joint_angle(joint, angle, speed)</code>. <code>lifecam_studio_capture_image(format)</code>. <code>wifi_scan()</code>. Target ~24 high-leverage tools, not a sprawling catalog. Each gets a typed JSON Schema with parameters, descriptions, and implementation hints.</p>
+      <span class="tag">interface.md → _generated/interface/output.json</span>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="dot-wrap"><div class="dot"></div></div>
+    <div>
+      <h4>SERVE — "Write the actual server."</h4>
+      <p>The agent generates a complete FastMCP <code>server.py</code> — typically 470–610 lines — with one <code>@mcp.tool()</code> handler per schema. Real hardware I/O. Thread locks for shared buses. No stubs, no TODOs, no <code>pass</code>. The server is self-contained and ready to run.</p>
+      <span class="tag">serve.md → _generated/serve/server.py</span>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="dot-wrap"><div class="dot green"></div></div>
+    <div>
+      <h4>DEPLOY — "Make it live."</h4>
+      <p>Install dependencies. Start the server on port 7777. Write config snippets for Claude Desktop, OpenClaw, Cursor. Arm the watch/heal daemon. The MCP server is now accepting connections.</p>
+      <span class="tag">deploy.md → http://0.0.0.0:7777/mcp</span>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="dot-wrap"><div class="dot amber"></div></div>
+    <div>
+      <h4>PERCEIVE + ARM — privileged steps</h4>
+      <p>If a camera was discovered, the perceive step selects it as the "perception eye," generates a thin capture bridge, and initializes a Markov visual state (current frame, prior frame, rolling text summary). If a robotic arm was discovered, the arm step verifies the generated tools against the physical hardware — and rewrites them if they're wrong.</p>
+      <span class="tag">conditional · only runs if relevant hardware is present</span>
+    </div>
+  </div>
+  <div class="step-card">
+    <div class="dot-wrap"><div class="dot violet"></div></div>
+    <div>
+      <h4>EXPOSE — public in one command</h4>
+      <p><code>octopus expose</code> spins a Cloudflare quick-tunnel. Your phone agent in a cafe drives your Pi at home. One command from "running locally" to "any agent on the public internet can drive this hardware." Neither piece is novel in isolation; the design point is that the deployment surface scales to the public internet without the user editing any networking config.</p>
+      <span class="tag">octopus expose → https://&lt;random&gt;.trycloudflare.com/mcp</span>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ═══════════════ PRINCIPLES ═══════════════ -->
+<div class="col" id="principles">
+<h2>Principles we coalesced on</h2>
+<p>Six design principles emerged from building this. Each one was earned by a bug, a misdesign, or a late-night argument.</p>
+</div>
+
+<div class="wide">
+  <div class="principles reveal">
+    <div class="pr-card">
+      <div class="n">01 · RALPH</div>
+      <h4>Read · Agent · Loop · Pass</h4>
+      <p>The only control structure in Octopus. Every pipeline stage, every daemon tick, every heal action is the same four-step loop. The orchestrator stays small &mdash; it doesn't know what stage it's executing, only how to render a spec, spawn the agent, and check whether a file appeared. The filesystem is the API.</p>
+      <p style="margin-top:8px"><a href="https://ghuntley.com/ralph/">Builds on Geoffrey Huntley's RALPH loop ↗</a></p>
+    </div>
+    <div class="pr-card">
+      <div class="n">02 · MARKOV STATE</div>
+      <h4>Each iteration sees only the prior output</h4>
+      <p>One step back, no further. <code>interface.md</code> reads <code>identify/output.json</code>, never <code>probe/output.json</code>. Retries see the prior <code>agent.log</code>, not the full history. The daemon's visual state is two frames + a rolling text summary. Bounded context, recoverable failures, predictable costs.</p>
+    </div>
+    <div class="pr-card">
+      <div class="n">03 · TWO FACES</div>
+      <h4>Self-reference at two layers</h4>
+      <p><strong>Software:</strong> the daemon tails its own server logs, reasons about its own health, patches itself on degradation. <strong>Hardware:</strong> the camera watches the arm to verify commands the agent just sent — a literal mirror, in physical form. The software face is what we have empirical confidence in; the hardware face is one demo, however compelling. We're honest about which is which.</p>
+    </div>
+    <div class="pr-card">
+      <div class="n">04 · SCHEMAS IN PROMPTS</div>
+      <h4>The orchestrator stays minimal</h4>
+      <p>Specs encode the shapes the agent must produce. Schema discipline is the contract. When we find ourselves adding a device-specific conditional to the orchestrator, we've made a mistake — that belongs in a spec. A new device class shipped as a spec edit is a small change. A new device class shipped as Python is a regression.</p>
+    </div>
+    <div class="pr-card">
+      <div class="n">05 · PRIVILEGED STEPS</div>
+      <h4>Name the messy compromise</h4>
+      <p>"Hardware-agnostic" was always aspirational. What's actually true: device-agnostic for the general path, with curated hooks for hardware we care about. <code>perceive.md</code> (camera + rail) and <code>arm.md</code> run conditionally, only if that hardware is discovered. The hooks are explicit, scoped, and never imported by the general pipeline.</p>
+    </div>
+    <div class="pr-card">
+      <div class="n">06 · TUNNEL STAR</div>
+      <h4>Tiny problem → tiny fix</h4>
+      <p>The MCP server is localhost-only. Useless to an agent on a phone. <code>octopus expose</code> spins a Cloudflare quick-tunnel and prints a public HTTPS URL. One command from "running on a Pi in a dorm room" to "any agent on the public internet can drive this hardware." We think this is the demo moment that sticks.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ RALPH LOOP VISUAL ═══════════════ -->
+<div class="col">
+<h3>The RALPH loop, concretely</h3>
+<p>Every step the orchestrator runs is the same shape:</p>
+
+<div class="ralph-loop reveal">
+  <div class="step" style="border-color: var(--accent); color: var(--accent);">READ spec</div>
+  <span class="arr">→</span>
+  <div class="step">AGENT runs</div>
+  <span class="arr">→</span>
+  <div class="step">LOOP on output file</div>
+  <span class="arr">→</span>
+  <div class="step" style="border-color: var(--green); color: var(--green);">PASS / HALT</div>
+</div>
+
+<p>This single loop is why the orchestrator stays small while the system grows. Adding the perception subsystem didn't add Python — it added <code>perceive.md</code>. Adding daemon-side device-renumbering recovery didn't add Python — it added a new heal classification to <code>heal.md</code>. Every new behaviour is a new spec, not a new control path.</p>
+</div>
+
+<!-- ═══════════════ WHAT THIS IS NOT ═══════════════ -->
+<div class="col">
+<h2>What this is not</h2>
+</div>
+
+<div class="wide">
+  <div class="not-list reveal">
+    <div class="not-item">
+      <div class="x">✕</div>
+      <p><strong>Not "an LLM controls a robot."</strong> It's a coding agent writing a typed tool layer once, at install time. After that, the MCP server is plain Python with real SDK calls. The LLM is gone from the hot path.</p>
+    </div>
+    <div class="not-item">
+      <div class="x">✕</div>
+      <p><strong>Not ROS.</strong> Much smaller surface area. No centralized state, no topic graph, no launch files. Five markdown specs and a small orchestrator. The generated server is a single self-contained Python file.</p>
+    </div>
+    <div class="not-item">
+      <div class="x">✕</div>
+      <p><strong>Not Hugging Face's LeRobot.</strong> Octopus is hardware-agnostic — it probes whatever's plugged in. LeRobot is one possible discovery target. In fact, the arm step reads LeRobot's calibration JSON for the degree-to-raw mapping; they're complementary.</p>
+    </div>
+    <div class="not-item">
+      <div class="x">✕</div>
+      <p><strong>Not pre-trained policies.</strong> We don't ship weights. We ship specs. The agent reads online documentation and writes code against the relevant SDKs. No training data, no fine-tuning, no reward functions.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TRY IT ═══════════════ -->
+<div class="col" id="install">
+<h2>Try it</h2>
+
+<div class="install-block">
+  <h3>Two commands. Then your machine has tools.</h3>
+  <p style="color: var(--ink-2); margin-bottom: 18px;">The pipeline runs with Gemini 3 Flash via OpenRouter by default. Any OpenRouter-compatible key works.</p>
+
+  <div class="cmd-line"><span class="p">$</span><span class="body"><span class="a">export</span> OPENROUTER_API_KEY=sk-or-v1-•••</span></div>
+  <div class="cmd-line"><span class="p">$</span><span class="body"><span class="a">curl</span> -fsSL https://raw.githubusercontent.com/qsimeon/octopus-hw/main/install.sh | bash</span></div>
+
+  <ul class="checklist">
+    <li>An <code>OPENROUTER_API_KEY</code> (grab one at <a href="https://openrouter.ai">openrouter.ai</a>)</li>
+    <li>~25 minutes (Mac is faster; Pi takes longer)</li>
+    <li>Something plugged in — a camera, a serial device, GPIO sensors, anything</li>
+    <li>Python 3.11+, Node 18+, Git on PATH</li>
+    <li>macOS, Linux (Debian/Ubuntu/Pi OS), or WSL</li>
+  </ul>
+
+  <div style="display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+    <a class="btn btn-primary" href="https://github.com/qsimeon/octopus-hw">Read the source →</a>
+    <a class="btn btn-ghost" href="https://qsimeon.github.io/octopus-hw/">Live demo site →</a>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════ AGENTIC OS THESIS ═══════════════ -->
+<div class="col">
+<h2>The agentic OS thesis</h2>
+
+<p>There's a bigger idea underneath all of this.</p>
+
+<p>An operating system is a runtime for applications. You don't write to disk sectors; you call <code>write()</code> and the OS figures out the device-specific path. The application describes <em>what</em>; the OS handles <em>how</em>.</p>
+
+<p><strong>A coding agent is a runtime for specs.</strong> Like an OS abstracts the disk, a coding agent abstracts the platform. The spec describes <em>what</em>; the agent figures out <em>how</em>. The spec never rots because agents improve.</p>
+
+<p>This is the move Octopus makes explicit: <strong>prompts are the protocol</strong>, and infrastructure is what emerges when an agent reads that protocol on real hardware. The five protocol spec files drive a small orchestrator. The result is a complete, running MCP server tailored to whatever's plugged in. No driver registry. No device manifest. No per-device switch statements.</p>
+
+<p>We think the installed-software era is ending for a large class of problems. What does "deploying software" mean in a world where agents read specs and write implementations on site? You ship the spec. The runtime is the agent. The platform is whatever's plugged in. The infrastructure that used to be hand-written, per-device, per-platform — that's the part the agent inhabits now.</p>
+
+<p>Octopus is one instance of this pattern applied to hardware. The same pattern works for cloud infrastructure, for API integrations, for data pipelines — anywhere the implementation is platform-specific but the intent is portable. We built the hardware version because that's where the gap was widest and the demo is the most visceral: you can watch the arm move.</p>
+</div>
+
+<!-- ═══════════════ HONEST OPEN WORK ═══════════════ -->
+<div class="col">
+<h2>Honest open work</h2>
+
+<p>Hardware self-perception works for our arm rig with controlled lighting — the camera sees the arm, the vision model summarizes what changed, the daemon verifies its own actions. It is not generalized. A different rig, different lighting, a camera that isn't pointed at the actuator — all untested. We claim the pattern; we don't claim it transfers without work.</p>
+
+<p>Stable public URLs (named Cloudflare tunnels that survive restarts) are post-launch work. Today, <code>octopus expose</code> gives you a quick-tunnel URL that rotates every time the tunnel restarts. Fine for demos; not fine for production.</p>
+
+<p>The system generates control code; it does not synthesize safety code. Voltage limits, thermal cutoffs, duty-cycle enforcement — these must be present in the spec or absent from the system. <code>arm.md</code> includes scaffolding (joint-2 thermal management, torque-enable at init, bus arbitration locks). Specs for other hardware would need equivalent scaffolding.</p>
+
+<p>We invite collaboration. The honest open question: <strong>what kinds of hardware does this not work on?</strong> Hardware with no public documentation. Hardware requiring kernel-mode drivers. Hardware behind license-walled SDKs. Hardware with strict real-time requirements. Python + MCP + LLM-in-the-loop is fine for a 6-DOF teaching arm; not fine for a quadruped balance controller. The boundary between "agent-ready" and "human-only" hardware is the interesting research frontier.</p>
+
+
+
+</div>
+
+</article>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer>
+  <div class="col">
+    <div>
+      <p style="margin: 0 0 8px;"><strong style="color: var(--ink);">Octopus</strong> · MIT MAS.664 · Spring 2026</p>
+      <p style="margin: 0;">
+        <a href="/cdn-cgi/l/email-protection#2756544e4a424849674a4e5309424352">Quilee Simeon</a> (MIT) ·
+        <a href="/cdn-cgi/l/email-protection#6b1202070e340d0a052b060f0e45030a191d0a190f450e0f1e">Yile Fan</a> (Harvard) ·
+        <a href="/cdn-cgi/l/email-protection#c9a4beaca089afa8bae7a1a8bbbfa8bbade7acadbc">Minggan Wei</a> (Harvard)
+      </p>
+    </div>
+    <div class="foot-links" style="text-align: right;">
+      <a href="https://github.com/qsimeon/octopus-hw">GitHub (public)</a>
+      <a href="https://qsimeon.github.io/octopus-hw/">Live demo site</a>
+      <a href="https://github.com/qsimeon/octopus-hw/blob/main/docs/philosophy.md">Philosophy</a>
+    </div>
+  </div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// Scroll reveal — light, no dependencies
+(function(){
+  if (!('IntersectionObserver' in window)) return;
+  var els = document.querySelectorAll('.reveal, .trends, .principles, .not-list, .arch-svg-wrap, .ralph-loop, .bf, .install-block, .callout, article h2');
+  els.forEach(function(el, i){
+    el.classList.add('reveal');
+    el.style.transitionDelay = Math.min(i % 4 * 50, 150) + 'ms';
+  });
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.08 });
+  els.forEach(function(el){ io.observe(el); });
+})();
+</script>
+
+<script>
+  /* When framed (octopusprotocol.ai uses frameset-based domain forwarding),
+     external links try to load inside the frame. GitHub sends X-Frame-Options:deny
+     and the click silently fails. Force external links to break out of the frame.
+     No-op when not framed, so qsimeon.github.io and direct opens are unchanged. */
+  (function(){
+    try { if (window.top === window.self) return; } catch (e) { /* cross-origin top, we ARE framed */ }
+    document.querySelectorAll('a[href]').forEach(function(a){
+      var href = a.getAttribute('href') || '';
+      if (/^https?:\/\//i.test(href) && !a.hasAttribute('target')) {
+        a.setAttribute('target', '_top');
+      }
+    });
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Octopus — Agentic Abstraction Layer for Hardware Interaction</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   Octopus deck v1 — Yile aesthetic (pure black, bold sans, red-orange accent)
+   Single-file standalone HTML deck. Arrow keys navigate. F = fullscreen.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg: #000;
+  --ink: #fff;
+  --ink-2: #b3b3b3;
+  --ink-3: #6b6b6b;
+  --accent: #ff4500;            /* Yile red-orange */
+  --accent-soft: #ff6633;
+  --pill: #2a2a2a;
+  --pill-active: #4a4a4a;
+  --col: min(1200px, 92vw);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: -apple-system, "SF Pro Display", "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; }
+body { display: flex; align-items: center; justify-content: center; }
+
+.deck { position: relative; width: 100%; height: 100%; }
+.slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 4vh 8vw; opacity: 0; pointer-events: none; transition: opacity .35s ease; }
+.slide.active { opacity: 1; pointer-events: auto; }
+
+.eyebrow { font-size: clamp(11px, 1.1vw, 14px); letter-spacing: 0.18em; color: var(--ink-3); text-transform: uppercase; margin-bottom: clamp(16px, 2.5vh, 32px); font-weight: 500; }
+h1, h2 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+h1 { font-size: clamp(48px, 7vw, 96px); }
+h2 { font-size: clamp(36px, 5.5vw, 72px); margin-bottom: clamp(20px, 3vh, 40px); }
+.h2-grow .accent { color: var(--accent); border-bottom: 3px solid var(--accent); padding-bottom: 4px; }
+.lede { font-size: clamp(20px, 2.2vw, 32px); color: var(--ink-2); line-height: 1.4; max-width: 60ch; }
+.tiny { font-size: clamp(13px, 1vw, 15px); color: var(--ink-3); }
+
+.row { display: flex; gap: 32px; align-items: center; flex-wrap: wrap; }
+.cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+
+.pills { display: flex; gap: 16px; flex-wrap: wrap; margin: 24px 0; }
+.pill { background: var(--pill); border: 1px solid #333; border-radius: 999px; padding: 8px 20px; font-size: clamp(12px, 1.2vw, 16px); color: var(--ink); }
+.pill.muted { background: transparent; color: var(--ink-3); border-color: #2a2a2a; }
+.pill.lit { background: rgba(255,69,0,0.12); border-color: var(--accent); color: var(--accent); }
+
+.code-box { background: var(--pill); border: 1px solid var(--accent); border-radius: 12px; padding: 24px 32px; font-family: "JetBrains Mono", "SF Mono", Menlo, monospace; font-size: clamp(13px, 1.4vw, 18px); color: var(--ink); line-height: 1.6; box-shadow: 0 0 60px rgba(255,69,0,0.15); }
+.code-box .dim { color: var(--ink-3); }
+
+.giant-num { font-size: clamp(72px, 10vw, 140px); font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.giant-num + .giant-cap { font-size: clamp(16px, 1.6vw, 22px); color: var(--ink-2); margin-top: 8px; }
+
+.video-frame { width: 100%; max-width: 80vw; max-height: 75vh; aspect-ratio: 16 / 9; background: #0a0a0a; border-radius: 12px; overflow: hidden; border: 1px solid #1a1a1a; }
+.video-frame video, .video-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* Slide 2 device-class icons (Gemini-generated photoreal minimalist objects). */
+.device-icon { width: clamp(96px, 11vw, 156px); height: clamp(96px, 11vw, 156px); object-fit: cover; border-radius: 14px; border: 1px solid #1f1f1f; box-shadow: 0 4px 24px rgba(255,69,0,0.08); }
+
+/* Slide 1 — Octopus title with logo replacing the O. Logo is squared, the
+   text is sans-serif, so we size to ~the cap height of the C and nudge it
+   up a hair to align optically. */
+.title-octopus { font-size: clamp(96px, 14vw, 200px); font-weight: 800; letter-spacing: -0.04em; line-height: 0.95; display: flex; align-items: center; gap: 0.02em; }
+.title-octopus .title-o { height: 0.92em; width: 0.92em; object-fit: contain; display: block; transform: translateY(-0.04em); filter: drop-shadow(0 8px 24px rgba(255,69,0,0.25)); }
+.title-octopus .title-rest { color: var(--ink); display: block; line-height: 0.92; }
+/* Slide 1 hero image — less zoom so the rig isn't cropped at the arm. */
+.hero-img img { width: 100%; height: 100%; object-fit: contain; object-position: center center; opacity: 0.85; }
+
+/* Slide 5 — team headshots + embed cards. */
+.team-card { width: clamp(120px, 14vw, 180px); }
+.team-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 14px; border: 1px solid #1a1a1a; }
+.team-card figcaption { margin-top: 12px; font-size: clamp(13px, 1.1vw, 16px); color: var(--ink-2); line-height: 1.35; }
+.team-card figcaption strong { color: var(--ink); }
+.team-card figcaption span { color: var(--ink-3); font-size: 0.88em; }
+
+.embed-card { display: flex; gap: 16px; padding: 14px; background: #0a0a0a; border: 1px solid #1f1f1f; border-radius: 12px; text-decoration: none; color: inherit; transition: border-color .2s ease, transform .2s ease; }
+.embed-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.embed-card img { width: clamp(120px, 16vw, 240px); aspect-ratio: 16/10; object-fit: cover; object-position: top center; border-radius: 6px; flex-shrink: 0; border: 1px solid #1f1f1f; }
+.embed-card .embed-meta { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.embed-card .embed-url { font-family: "JetBrains Mono", monospace; color: var(--ink); font-size: clamp(13px, 1.2vw, 17px); font-weight: 600; margin: 4px 0; word-break: break-word; }
+.embed-card .embed-sub { color: var(--ink-3); font-size: clamp(11px, 0.95vw, 13px); margin: 0; }
+
+/* Slide 7 — limitation row icons. */
+.limit-row { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; font-size: clamp(13px, 1.15vw, 16px); color: var(--ink-2); line-height: 1.4; }
+.limit-row strong { color: var(--ink); }
+.limit-icon { width: clamp(48px, 5vw, 72px); height: clamp(48px, 5vw, 72px); object-fit: cover; border-radius: 10px; border: 1px solid #1a1a1a; flex-shrink: 0; box-shadow: 0 2px 12px rgba(255,69,0,0.06); }
+
+/* Slide 6 — full-screen vision text with translucent network bg.
+   Bg is a single inline <img> on the section using viewport units; no ::before
+   so we don't double-render the image. */
+.vision-slide { position: relative; }
+.vision-fg { position: relative; z-index: 1; }
+
+.circles { display: flex; gap: 32px; align-items: center; }
+.circle { width: clamp(80px, 12vw, 160px); height: clamp(80px, 12vw, 160px); border-radius: 50%; background: #2a2a2a; border: 1px solid #3a3a3a; display: flex; align-items: center; justify-content: center; text-align: center; padding: 8px; font-size: clamp(11px, 1vw, 14px); color: var(--ink-2); line-height: 1.2; }
+.circle.lit { background: rgba(255,69,0,0.08); border-color: var(--accent); color: var(--accent); }
+
+.center { text-align: center; align-items: center; justify-content: center; }
+.kicker { font-size: clamp(28px, 3.5vw, 44px); font-weight: 600; line-height: 1.3; color: var(--ink); }
+.author-block { position: absolute; bottom: 6vh; left: 8vw; }
+.author-block .name { font-size: clamp(14px, 1.3vw, 18px); color: var(--ink-2); letter-spacing: 0.08em; text-transform: uppercase; }
+.author-block .class { font-size: clamp(12px, 1vw, 14px); color: var(--ink-3); margin-top: 6px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.hero-img { position: absolute; right: -2vw; top: 0; bottom: 0; width: 50vw; opacity: 0.85; pointer-events: none; }
+.hero-img img { width: 100%; height: 100%; object-fit: cover; mix-blend-mode: lighten; }
+
+.diagram-row { display: flex; align-items: center; justify-content: center; gap: 32px; }
+.diagram-row .blob { padding: 24px 36px; border: 1px solid var(--ink-3); border-radius: 16px; font-size: clamp(14px, 1.4vw, 20px); color: var(--ink); }
+.diagram-row .blob.circle-blob { width: 180px; height: 180px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.diagram-row .arrow { color: var(--accent); font-size: 28px; }
+
+.bullet-list { list-style: none; display: grid; gap: 16px; margin-top: 16px; }
+.bullet-list li { font-size: clamp(18px, 1.8vw, 24px); color: var(--ink-2); line-height: 1.5; padding-left: 28px; position: relative; }
+.bullet-list li::before { content: ""; position: absolute; left: 0; top: 12px; width: 12px; height: 2px; background: var(--accent); }
+.bullet-list li strong { color: var(--ink); }
+
+.stats { display: flex; gap: 56px; }
+.stat { text-align: left; }
+.stat .num { font-size: clamp(40px, 5vw, 72px); font-weight: 700; color: var(--accent); }
+.stat .lab { font-size: clamp(13px, 1.1vw, 16px); color: var(--ink-2); letter-spacing: 0.05em; text-transform: uppercase; margin-top: 8px; }
+
+.nav { position: fixed; bottom: 16px; right: 24px; font-size: 12px; color: var(--ink-3); font-family: "JetBrains Mono", monospace; letter-spacing: 0.05em; pointer-events: none; user-select: none; }
+.progress { position: fixed; bottom: 0; left: 0; height: 2px; background: var(--accent); transition: width .35s ease; z-index: 100; }
+.help { position: fixed; bottom: 16px; left: 24px; font-size: 11px; color: var(--ink-3); font-family: "JetBrains Mono", monospace; pointer-events: none; user-select: none; }
+</style>
+</head>
+<body>
+
+<!-- Deck v2 — content rewritten 2026-05-05 to follow `octopus-final-deck-content.md`
+     6 slides · 2-min total budget (3+20+30+40+10+20).
+     Yile's aesthetic preserved (pure black, bold sans, #FF4500 accent). -->
+
+<div class="deck" id="deck">
+
+<!-- ═══════════════ S1: TITLE (3 sec) ═══════════════ -->
+<section class="slide active" data-i="0">
+  <div style="position:relative;width:100%;height:100%;display:flex;align-items:center">
+    <div style="z-index:2;max-width:60vw">
+      <h1 class="title-octopus">
+        <img src="assets/octopus-logo-2-inverted.png" alt="O" class="title-o"/><span class="title-rest">ctopus</span>
+      </h1>
+      <p style="font-size:clamp(22px, 2.4vw, 36px); color:var(--ink-2); margin-top:24px; max-width:52ch; line-height:1.3">
+        Universal agentic hardware control —<br>
+        <span style="color:var(--ink)">one install command, any device.</span>
+      </p>
+      <p class="tiny" style="margin-top:32px;font-family:'JetBrains Mono',monospace;color:var(--accent)">qsimeon.github.io/octopus-hw</p>
+    </div>
+    <div class="hero-img" aria-hidden="true">
+      <img src="assets/slide1-hero-blend.png" alt=""
+           onerror="this.src='assets/rig-full.jpeg'; this.style.filter='grayscale(100%) brightness(0.7)'; this.style.opacity='0.4'"/>
+    </div>
+  </div>
+  <div class="author-block">
+    <div class="name">Quilee Simeon · Minggan (Justin) Wei · Yile Fan</div>
+    <div class="class">MIT · Harvard · Harvard &nbsp;·&nbsp; MAS.664 AI Studio · Spring 2026</div>
+  </div>
+  <aside class="notes" style="display:none">Introduce the team while the title is up; transition straight into the problem statement without pause.</aside>
+</section>
+
+<!-- ═══════════════ S2: PROBLEM (~20 sec) ═══════════════ -->
+<section class="slide" data-i="1">
+  <p class="eyebrow">The problem</p>
+  <h2 class="h2-grow">Hardware doesn't ship <span class="accent">agent-callable APIs.</span></h2>
+
+  <div class="device-row" style="margin-top:48px;display:flex;align-items:center;gap:28px;flex-wrap:wrap">
+    <img src="assets/robot-arm.png" alt="Robot arm" class="device-icon"/>
+    <img src="assets/3d-printer.png" alt="3D printer" class="device-icon"/>
+    <img src="assets/smart-fridge.png" alt="Smart fridge" class="device-icon"/>
+    <div style="font-size:clamp(40px,4vw,56px);color:var(--ink-3);font-weight:300">?</div>
+    <div class="arrow" style="font-size:clamp(28px,2.5vw,40px)">→</div>
+    <div class="blob" style="border-color:var(--accent);color:var(--accent);font-weight:600;font-size:clamp(18px,1.7vw,24px);padding:14px 24px">an agent surface that doesn't exist yet</div>
+  </div>
+
+  <p class="lede" style="max-width:64ch;margin-top:40px;font-size:clamp(17px,1.6vw,21px)">
+    Every appliance, lab instrument, robot arm, sensor rig, smart-home device — anything with a microcontroller — should be agent-controllable.
+    <strong style="color:var(--ink)">Drivers and SDKs are written one device at a time, by humans, for one OS.</strong>
+    The MCP explosion in software hasn't reached hardware.
+  </p>
+
+  <aside class="notes" style="display:none">~20 sec verbatim: "Every embedded device — appliances, lab gear, robot arms, smart-home sensors — has a microcontroller and should be agent-controllable. But hardware doesn't ship agent-callable APIs. Every install is a hand-written driver for one specific OS. The MCP explosion in software hasn't reached hardware. That's the gap."</aside>
+</section>
+
+<!-- ═══════════════ S3: APPROACH (~30 sec) — TWO COLUMNS ═══════════════ -->
+<section class="slide" data-i="2">
+  <p class="eyebrow">The approach</p>
+
+  <div class="cols-2" style="gap:64px;align-items:center;margin-top:8px;height:80vh">
+    <!-- LEFT — hero text: the two ideas -->
+    <div>
+      <h2 style="font-size:clamp(36px,4.6vw,68px); line-height:1.04; margin-bottom:36px">
+        The coding agent <em style="color:var(--accent);font-style:italic;font-weight:700">is</em> the software.
+      </h2>
+      <h2 style="font-size:clamp(26px,3.1vw,44px); color:var(--ink-2); font-weight:500; line-height:1.15">
+        Prompts are <em style="color:var(--accent);font-style:italic">infrastructure</em>.
+      </h2>
+      <p class="lede" style="font-size:clamp(15px,1.35vw,18px); color:var(--ink-3); margin-top:32px; max-width:46ch; line-height:1.45">
+        You don't ship code. You ship an agent that reads markdown specs and writes the code at install time — on whatever hardware happens to be plugged in.
+      </p>
+    </div>
+
+    <!-- RIGHT — kicker + arch animation (larger) -->
+    <div>
+      <p class="kicker" style="font-size:clamp(17px,1.55vw,21px); color:var(--accent); margin-bottom:20px; text-align:left; font-weight:600; line-height:1.4">
+        One shell command. ~20 minutes. Every connected peripheral becomes a typed, agent-callable MCP tool.
+      </p>
+      <div class="video-frame" style="background:#0f172a; aspect-ratio:auto; height:auto; max-width:100%; max-height:65vh">
+        <video autoplay loop muted playsinline preload="metadata"
+               style="background:#0f172a; object-fit:contain; max-height:65vh">
+          <source src="assets/architecture-build-deck.mp4" type="video/mp4">
+          <img src="assets/architecture-simple-deck.svg" alt="Octopus architecture diagram">
+        </video>
+      </div>
+    </div>
+  </div>
+
+  <aside class="notes" style="display:none">~30 sec verbatim: "Two ideas, both simple. First: the coding agent is the software. Like an OS is a runtime for applications, the coding agent is a runtime for prompts. You ship five markdown specs and a coding agent reads them at install time, probes your hardware, looks up datasheets online, and writes a working MCP server tailored to that exact machine. Second: prompts are infrastructure. Same five specs work on a Mac. Same five specs work on a Raspberry Pi. The agent figures out the rest. We call this Infrastructure-as-Prompts."</aside>
+</section>
+
+<!-- ═══════════════ S4: DEMO — local edited demo MP4 in HTML. When exporting
+     to Google Slides, swap this slide's static thumbnail for the YouTube
+     embed (the URL Quilee uploads the edited video at — see SPEAKER-NOTES). ═ -->
+<section class="slide center" data-i="3">
+  <p class="eyebrow" style="align-self:flex-start">Demo</p>
+  <h2 style="text-align:center">curl | bash → closed-loop visual-motor control.</h2>
+  <div class="video-frame" style="margin-top:24px;max-width:88vw;max-height:72vh">
+    <video autoplay loop muted playsinline preload="metadata"
+           poster="assets/imagen-abstract-tentacles.png">
+      <source src="assets/octopus-final.mp4" type="video/mp4">
+      <img src="assets/rig-full.jpeg" alt="Octopus demo fallback">
+    </video>
+  </div>
+  <p class="tiny" style="margin-top:14px">Pi install → Cloudflare tunnel → Claude Desktop calls our Pi → arm physically moves → camera sees the result. Narrated by <em>Daniel</em> (ElevenLabs).</p>
+
+  <aside class="notes" style="display:none">~40 sec verbatim, paced to video cuts: "One shell command on a Mac. Twenty minutes later, an MCP server tailored to whatever's plugged in. Same command on a Raspberry Pi — different hardware, different generated tools, same five markdown specs. Octopus expose runs a Cloudflare tunnel: the Pi's MCP server is now live on the public internet. Claude Desktop in another room picks up the URL, sees the tools, calls them. The arm physically moves. The camera on the Pi sees the result. Closed-loop visual-motor control over standard MCP — and the only custom thing in the loop is markdown."</aside>
+</section>
+
+<!-- ═══════════════ S5: TEAM + TRACTION (~12 sec) — embed cards + headshots ═══════ -->
+<section class="slide" data-i="4">
+  <p class="eyebrow">Team &amp; traction</p>
+  <h2 style="font-size:clamp(36px,4.6vw,64px); line-height:1.05; margin-bottom:24px">
+    Open. Live. <span class="accent">Available right now.</span>
+  </h2>
+
+  <div class="team-row" style="display:flex;gap:32px;margin-top:8px;align-items:flex-start;flex-wrap:wrap">
+    <figure class="team-card">
+      <img src="assets/quilee.png" alt="Quilee Simeon"/>
+      <figcaption><strong>Quilee Simeon</strong><br><span>MIT</span></figcaption>
+    </figure>
+    <figure class="team-card">
+      <img src="assets/justin.png" alt="Minggan (Justin) Wei"/>
+      <figcaption><strong>Minggan (Justin) Wei</strong><br><span>Harvard</span></figcaption>
+    </figure>
+    <figure class="team-card">
+      <img src="assets/yile.png" alt="Yile Fan"/>
+      <figcaption><strong>Yile Fan</strong><br><span>Harvard</span></figcaption>
+    </figure>
+  </div>
+
+  <div class="embed-row" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px">
+    <a class="embed-card" href="https://octopusprotocol.ai/" target="_blank" rel="noopener">
+      <img src="assets/preview-site.png" alt="Live site preview"/>
+      <div class="embed-meta">
+        <p class="eyebrow" style="margin:0;font-size:10px">Live demo</p>
+        <p class="embed-url">octopusprotocol.ai</p>
+        <p class="embed-sub">drive our Pi from your phone, right now</p>
+      </div>
+    </a>
+    <a class="embed-card" href="https://qsimeon.github.io/octopus-hw/blog/" target="_blank" rel="noopener">
+      <img src="assets/preview-blog.png" alt="Blog preview"
+           onerror="this.src='assets/preview-repo.png'"/>
+      <div class="embed-meta">
+        <p class="eyebrow" style="margin:0;font-size:10px">Technical blog</p>
+        <p class="embed-url">qsimeon.github.io/octopus-hw/blog/</p>
+        <p class="embed-sub">how it works, what we learned, what's next</p>
+      </div>
+    </a>
+  </div>
+
+  <aside class="notes" style="display:none">~12 sec: "Built by a three-person team — Quilee at MIT BCS-IDSS, Justin at Harvard SEAS, Yile at Harvard SEAS+GSD. It's open. Live at qsimeon.github.io slash octopus-hw — judges, anyone in this room can pull out their phone and drive our Pi right now."</aside>
+</section>
+
+<!-- ═══════════════ S6: VISION — full-screen text + translucent network bg ═══════ -->
+<section class="slide vision-slide" data-i="5">
+  <img src="assets/slide6-vision.png"
+       alt=""
+       style="position:absolute;top:0;left:0;width:100vw;height:100vh;object-fit:cover;opacity:0.22;pointer-events:none;z-index:0;filter:blur(0.5px)"/>
+  <div class="vision-fg">
+    <p class="eyebrow">Vision</p>
+    <h2 class="h2-grow" style="max-width:95%; line-height:1.05">
+      The <span class="accent">agentic OS</span> for the physical world.
+    </h2>
+    <p class="lede" style="font-size:clamp(20px,2vw,28px); margin-top:24px; color:var(--ink-2); max-width:60ch">
+      HTTP for hardware agents. <strong style="color:var(--ink)">One protocol, any device.</strong>
+    </p>
+    <blockquote style="margin:48px 0 32px 0; padding:20px 32px; border-left:3px solid var(--accent); font-size:clamp(18px,1.9vw,26px); color:var(--ink); font-style:italic; max-width:78ch; line-height:1.45">
+      Coding agents are the new OS. Prompts are the instruction set.
+    </blockquote>
+    <p class="kicker" style="font-size:clamp(26px,3.2vw,44px); font-weight:700; line-height:1.15">
+      <span style="color:var(--accent)">Thousands of embodied devices.</span> <span style="color:var(--ink)">One install command.</span>
+    </p>
+  </div>
+
+  <aside class="notes" style="display:none">~17 sec verbatim: "Where this goes: the agentic OS for the physical world. HTTP for hardware agents — one protocol, any device. Coding agents are the new OS. Prompts are the instruction set. Thousands of embodied devices. One install command."</aside>
+</section>
+
+<!-- ═══════════════ S7: HONEST OPEN WORK — limitations + next, with thumbnails ═══ -->
+<section class="slide" data-i="6">
+  <p class="eyebrow">Honest open work</p>
+  <h2 class="h2-grow" style="margin-bottom:24px">Where we are. <span class="accent">Where this goes.</span></h2>
+
+  <div class="cols-2" style="gap:48px; align-items:flex-start">
+    <div>
+      <p class="eyebrow" style="font-size:11px; letter-spacing:0.18em; color:var(--ink-3); margin-bottom:16px">Today — limitations</p>
+      <div class="limit-row">
+        <img src="assets/robust.png" alt="" class="limit-icon"/>
+        <div><strong>Robust over fast.</strong> Same install, same hardware, two slightly different generated servers. Stochastic by default — deterministic when it matters.</div>
+      </div>
+      <div class="limit-row">
+        <img src="assets/speed.png" alt="" class="limit-icon"/>
+        <div><strong>Speed.</strong> ~25-min installs are too slow for casual demos. Caching + warm starts.</div>
+      </div>
+      <div class="limit-row">
+        <img src="assets/local.png" alt="" class="limit-icon"/>
+        <div><strong>Vibe-code bloat → local-first.</strong> Built fast, accumulated cruft; simplification + on-device agents next. Pi-class hardware should run a Pi-class agent.</div>
+      </div>
+    </div>
+    <div>
+      <p class="eyebrow" style="font-size:11px; letter-spacing:0.18em; color:var(--accent); margin-bottom:16px">Next — where this goes</p>
+      <div class="limit-row">
+        <img src="assets/catalog.png" alt="" class="limit-icon"/>
+        <div><strong>Distributed device catalog.</strong> Every install learns. Meta-learning across deployments → a shared, sharper spec library.</div>
+      </div>
+      <div class="limit-row">
+        <img src="assets/self-perception.png" alt="" class="limit-icon"/>
+        <div><strong>Self-perception, both faces.</strong> Daemon watches its logs; camera watches the arm. Extend both with what we learn.</div>
+      </div>
+      <div class="limit-row">
+        <img src="assets/virus.png" alt="" class="limit-icon"/>
+        <div><strong>Robotics + agentic control.</strong> Like a virus learning to infect more hardware — closing the gap from VLM to action.</div>
+      </div>
+      <div class="limit-row">
+        <img src="assets/uber.png" alt="" class="limit-icon"/>
+        <div><strong>Customer capture.</strong> Become for embodied devices what Uber became for rideshare — the easy way in, with the network effect.</div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="notes" style="display:none">~17 sec: "Honest about it. Today: stochastic — same install can produce two different servers. Twenty-five minute installs are slow. We accumulated some vibe-code bloat we're cleaning up. Where this goes: a distributed catalog where every install teaches the next one, self-perception extending in both directions, Octopus learning to infect more hardware, and customer-capture: become for embodied devices what Uber became for rideshare. Thank you."</aside>
+</section>
+
+</div>
+
+<div class="progress" id="progress" style="width:14.28%"></div>
+<div class="nav" id="nav">1 / 7</div>
+<div class="help">← →  navigate · F  fullscreen</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+let idx = 0;
+function go(n) {
+  idx = Math.max(0, Math.min(total - 1, n));
+  slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+  document.getElementById('nav').textContent = (idx + 1) + ' / ' + total;
+  document.getElementById('progress').style.width = ((idx + 1) / total * 100) + '%';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { go(idx + 1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { go(idx - 1); e.preventDefault(); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(total - 1);
+  else if (e.key === 'f' || e.key === 'F') {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+});
+document.addEventListener('click', e => {
+  // Click anywhere except video controls advances.
+  if (e.target.closest('video')) return;
+  go(idx + 1);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Slides — Octopus</title>
+<link rel="canonical" href="https://qsimeon.github.io/octopus-hw/slides/"/>
+<link rel="icon" href="../octopus-logo-1.png"/>
+<meta name="description" content="The PPTX deck we presented at the MIT AI Studio Demo Day, plus a self-contained HTML deck."/>
+<meta property="og:title" content="Octopus slide decks"/>
+<meta property="og:description" content="The PPTX deck we presented at the MIT AI Studio Demo Day, plus a self-contained HTML deck."/>
+<meta property="og:image" content="https://qsimeon.github.io/octopus-hw/slides/slide-4-demo.gif"/>
+<meta property="og:url" content="https://qsimeon.github.io/octopus-hw/slides/"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://qsimeon.github.io/octopus-hw/slides/slide-4-demo.gif"/>
+<style>
+  :root {
+    --bg:#0a0a0a; --bg-1:#111; --bg-2:#161616;
+    --border:#1e1e1e; --border-2:#2a2a2a;
+    --ink:#ededed; --ink-2:#a8a8a8; --ink-3:#6b6b6b;
+    --accent:#7dd3fc; --accent-hi:#bae6fd;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --wide:min(1140px,100%);
+    --pad:clamp(18px,4vw,32px);
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{background:var(--bg);scroll-behavior:smooth}
+  body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{color:var(--accent-hi);text-decoration:underline}
+
+  nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(10,10,10,.78);border-bottom:1px solid var(--border)}
+  nav .inner{max-width:var(--wide);margin:0 auto;padding:0 var(--pad);display:flex;align-items:center;justify-content:space-between;height:52px;font-size:14px}
+  nav .brand{display:flex;align-items:center;gap:9px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
+  nav .brand img{width:20px;height:20px;filter:invert(1);opacity:.9}
+  nav .links{display:flex;gap:20px;color:var(--ink-2)}
+  nav .links a{color:var(--ink-2)}
+  nav .links a:hover{color:var(--ink);text-decoration:none}
+  @media (max-width:540px){nav .links a:not(:last-child){display:none}}
+
+  main{max-width:var(--wide);margin:0 auto;padding:0 var(--pad)}
+
+  header.hero{padding:clamp(48px,8vw,80px) 0 clamp(24px,4vw,40px)}
+  header.hero .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);display:block;margin-bottom:18px}
+  header.hero h1{font-size:clamp(32px,5.5vw,52px);line-height:1.06;letter-spacing:-.03em;font-weight:700;margin:0 0 18px}
+  header.hero p{font-size:clamp(15.5px,1.6vw,18px);color:var(--ink-2);max-width:62ch;margin:0 0 12px;line-height:1.6}
+  header.hero p.meta{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);letter-spacing:.04em;margin-top:18px}
+
+  section.deck-section{padding:clamp(20px,3vw,40px) 0}
+  section.deck-section .label{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+  section.deck-section h2{font-size:clamp(20px,2.4vw,26px);font-weight:600;letter-spacing:-.015em;margin:0;color:var(--ink)}
+  section.deck-section .sub{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  section.deck-section p.lede{font-size:14.5px;color:var(--ink-2);margin:0 0 16px;max-width:64ch}
+
+  .frame{position:relative;background:#000;border:1px solid var(--border);border-radius:10px;overflow:hidden;aspect-ratio:16/9;width:100%}
+  .frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+  .frame .open-in-new{position:absolute;top:10px;right:10px;background:rgba(10,10,10,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--border-2);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:11px;color:var(--ink-2);text-decoration:none;z-index:2;letter-spacing:.04em}
+  .frame .open-in-new:hover{color:var(--ink);border-color:var(--accent);text-decoration:none}
+
+  .gif-callout{margin-top:20px;padding:18px;background:var(--bg-1);border:1px solid var(--border);border-radius:10px}
+  .gif-callout .head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .gif-callout .tag{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+  .gif-callout p{font-size:14px;color:var(--ink-2);margin:0 0 12px;max-width:70ch}
+  .gif-callout img{display:block;width:100%;max-width:560px;height:auto;border-radius:6px;border:1px solid var(--border-2)}
+
+  footer{border-top:1px solid var(--border);padding:32px 0 56px;color:var(--ink-3);font-size:13.5px;margin-top:clamp(40px,6vw,64px)}
+  footer .row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+  footer .row a{color:var(--ink-2)}
+  footer .row a:hover{color:var(--ink)}
+  @media (max-width:540px){footer .row{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a class="brand" href="../"><img src="../octopus-logo-1.png" alt=""/>Octopus</a>
+    <div class="links">
+      <a href="../">Home</a>
+      <a href="../blog/">Blog</a>
+      <a href="https://github.com/qsimeon/octopus-hw">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <header class="hero">
+    <span class="eyebrow">Slides</span>
+    <h1>Octopus slide decks</h1>
+    <p>The slides we presented at the MIT MAS.664 AI Studio Demo Day on May 7, 2026. The PPTX below is the final deck we presented from; a self-contained HTML version is also available below.</p>
+    <p class="meta">May 7, 2026 · Quilee Simeon · Minggan Wei · Yile Fan</p>
+  </header>
+
+  <section class="deck-section">
+    <div class="label">
+      <h2>Final presentation deck</h2>
+      <span class="sub">PPTX · 7 slides</span>
+    </div>
+    <p class="lede">Curated from the official MIT AI Studio shared deck. <a href="https://docs.google.com/presentation/d/1zhwCNpO-mL41GrC83SHWtfOGfnaobuYNV57zxZXbAHQ/edit?slide=id.g39a66c179f5_6_0" target="_blank" rel="noopener">Open the original on Google Slides &rarr;</a></p>
+    <div class="frame">
+      <a class="open-in-new" href="octopus-final-presentation.pptx" target="_blank" rel="noopener">Download .pptx &rarr;</a>
+      <iframe
+        src="https://view.officeapps.live.com/op/embed.aspx?src=https%3A%2F%2Fqsimeon.github.io%2Foctopus-hw%2Fslides%2Foctopus-final-presentation.pptx"
+        title="Octopus — Final presentation deck (PPTX)"
+        allowfullscreen loading="lazy"></iframe>
+    </div>
+
+    <div class="gif-callout">
+      <div class="head">
+        <span class="tag">Slide 4 · live demo recording</span>
+        <a href="slide-4-demo.gif" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">open full size &rarr;</a>
+      </div>
+      <p>Slide 4 of the deck contains an animated GIF of the live Pi demo. The Office Online viewer above renders embedded GIFs as a still frame; the animation itself plays here.</p>
+      <img src="slide-4-demo.gif" alt="Octopus live demo recording — Pi install, MCP server, arm motion through tool calls" loading="lazy"/>
+    </div>
+  </section>
+
+  <section class="deck-section">
+    <div class="label">
+      <h2>Self-contained HTML deck</h2>
+      <span class="sub">7 slides · ← / → to navigate · F for fullscreen</span>
+    </div>
+    <p class="lede">A standalone HTML version we built earlier in the project. Loads its own assets, no third-party dependencies.</p>
+    <div class="frame">
+      <a class="open-in-new" href="deck/index.html" target="_blank" rel="noopener">Open standalone &rarr;</a>
+      <iframe src="deck/index.html" title="Octopus self-contained HTML deck" allowfullscreen loading="lazy"></iframe>
+    </div>
+  </section>
+
+  <footer>
+    <div class="row">
+      <div>Octopus &middot; MIT MAS.664 AI Studio &middot; Spring 2026</div>
+      <div>
+        <a href="../">octopusprotocol.ai</a>
+        &nbsp;&middot;&nbsp;
+        <a href="https://github.com/qsimeon/octopus-hw">github.com/qsimeon/octopus-hw</a>
+        &nbsp;&middot;&nbsp;
+        <a href="../blog/">blog</a>
+      </div>
+    </div>
+  </footer>
+</main>
+
+<script>
+  /* Frame-escape: when octopusprotocol.ai's frameset wraps us, force external
+     http(s) links to break out so GitHub's X-Frame-Options:deny doesn't kill
+     them. No-op when not framed; same-page nav and iframe srcs untouched. */
+  (function(){
+    try { if (window.top === window.self) return; } catch (e) {}
+    document.querySelectorAll('a[href]').forEach(function(a){
+      var href = a.getAttribute('href') || '';
+      if (/^https?:\/\//i.test(href) && !a.hasAttribute('target')) {
+        a.setAttribute('target', '_top');
+      }
+    });
+  })();
+</script>
+</body>
+</html>

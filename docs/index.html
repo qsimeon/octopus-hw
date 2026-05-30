@@ -1,0 +1,1582 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Octopus — universal agentic hardware control</title>
+<meta name="description" content="curl | bash your way into MCP tools for whatever's plugged in. A coding agent reads markdown specs, discovers your hardware, and builds an MCP server.">
+<meta property="og:title" content="Octopus — universal agentic hardware control">
+<meta property="og:description" content="A coding agent reads markdown specs, discovers your hardware, and exposes it as MCP tools.">
+<meta property="og:type" content="website">
+<link rel="icon" href="octopus-logo-1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a;
+    --bg-elev:#121212;
+    --bg-tile:#141414;
+    --border:#1f1f1f;
+    --border-strong:#2a2a2a;
+    --text:#ededed;
+    --text-dim:#9a9a9a;
+    --text-faint:#6b6b6b;
+    --accent:#7dd3fc;      /* cyan-300 — mastra-ish */
+    --accent-hi:#bae6fd;
+    --accent-ink:#031018;
+    --radius:10px;
+    --radius-sm:6px;
+    --maxw:1120px;
+    --pad:clamp(14px, 4vw, 24px);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter','SF Pro Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{line-height:1.55;font-size:16px;overflow-x:hidden}
+  img,video{max-width:100%;height:auto}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{color:var(--accent-hi)}
+  code,pre,.mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad)}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);background:rgba(10,10,10,.72);border-bottom:1px solid var(--border)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;height:56px;min-width:0}
+  .brand{display:flex;align-items:center;gap:10px;color:var(--text);font-weight:600;letter-spacing:-.01em;min-width:0;flex-shrink:0}
+  .brand img{width:22px;height:22px;filter:invert(1);opacity:.92}
+  .nav-links{display:flex;align-items:center;gap:clamp(10px,2vw,22px);font-size:14px;color:var(--text-dim);flex-wrap:wrap;justify-content:flex-end;min-width:0}
+  .nav-links a{color:var(--text-dim)}
+  .nav-links a:hover{color:var(--text)}
+  /* At narrower viewports the 6 text links crowd the status pill; hide them
+     progressively so the pill (the "live" signal) keeps room. */
+  @media (max-width:880px){.nav-links a{display:none}}
+  @media (max-width:640px){.nav-links{display:none}}
+
+  /* hero */
+  .hero{padding:clamp(48px,9vw,88px) 0 clamp(40px,7vw,72px);position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 60% at 50% 0%, rgba(125,211,252,.10), transparent 70%);pointer-events:none}
+  /* minmax(0, ...) forces both columns to actually respect the fr split —
+     without the 0 floor, children with max-width (.install bar at 820px)
+     push the text column way past its share and the image collapses. */
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(24px,4vw,44px);align-items:center}
+  @media (max-width:960px){.hero-grid{grid-template-columns:minmax(0,1fr);gap:28px}}
+  .hero-text .install{max-width:100%}
+  .hero-visual{margin:0;position:relative;border-radius:var(--radius);overflow:hidden;box-shadow:0 30px 80px -30px rgba(125,211,252,.25),0 0 0 1px var(--border)}
+  .hero-visual img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;object-position:center 38%;background:#0a0a0a}
+  .hero-visual .hero-overlay{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 38%;opacity:.28;mix-blend-mode:screen;pointer-events:none}
+  @media (max-width:640px){
+    .hero{padding:48px 0 40px}
+    .hero-visual{aspect-ratio:auto}
+    .hero-visual img,.hero-visual .hero-overlay{aspect-ratio:16/10;object-position:center 45%}
+    h1{margin:14px 0 12px}
+    .lede{font-size:16px;margin-bottom:22px}
+  }
+  @media (max-width:520px){
+    .btn-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .probe-btn{white-space:normal;text-align:center;padding:12px 10px}
+  }
+  .hero-visual::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,transparent 55%,rgba(10,10,10,.25) 100%);pointer-events:none}
+  .eyebrow{display:inline-block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);border:1px solid var(--border-strong);padding:6px 10px;border-radius:999px;background:var(--bg-elev)}
+  h1{font-size:clamp(32px,6vw,68px);line-height:1.04;letter-spacing:-.025em;font-weight:700;margin:20px 0 18px;max-width:18ch;overflow-wrap:break-word;word-wrap:break-word;hyphens:auto}
+  h1 .accent{color:var(--accent)}
+  .lede{color:var(--text-dim);font-size:clamp(17px,1.5vw,19px);max-width:62ch;margin:0 0 32px}
+  .lede code{background:var(--bg-elev);border:1px solid var(--border);padding:2px 6px;border-radius:var(--radius-sm);color:var(--text)}
+
+  /* install */
+  .install{display:flex;align-items:stretch;gap:0;background:#0e0e0e;border:1px solid var(--border-strong);border-radius:var(--radius);max-width:min(820px,100%);overflow:hidden;margin-bottom:24px;min-width:0}
+  .install .prompt{color:var(--text-faint);padding:14px 12px 14px 18px;user-select:none;font-family:'JetBrains Mono',monospace;font-size:13.5px;flex-shrink:0}
+  .install pre{margin:0;padding:14px 16px 14px 4px;flex:1 1 0;min-width:0;color:var(--text);white-space:nowrap;overflow-x:auto;font-size:13.5px}
+  .install pre::-webkit-scrollbar{height:6px}
+  .install pre::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px}
+  .install button{background:transparent;border:0;border-left:1px solid var(--border-strong);color:var(--text-dim);padding:0 clamp(12px,3vw,18px);cursor:pointer;font-family:inherit;font-size:13px;letter-spacing:.02em;transition:color .12s,background .12s;flex-shrink:0}
+  .install button:hover{color:var(--text);background:var(--bg-elev)}
+  .install button.copied{color:var(--accent)}
+  .install-note{max-width:min(820px,100%);margin:-12px 0 24px;color:var(--text-faint);font-size:13px;line-height:1.55}
+  .install-note code{background:var(--bg-elev);padding:1px 6px;border-radius:4px;color:var(--text-dim);font-size:12.5px}
+
+  .ctas{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:var(--radius-sm);font-weight:500;font-size:14.5px;border:1px solid transparent;transition:transform .08s,background .12s,border-color .12s}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .btn-primary:hover{background:var(--accent-hi);color:var(--accent-ink)}
+  .btn-ghost{background:transparent;color:var(--text);border-color:var(--border-strong)}
+  .btn-ghost:hover{border-color:var(--text-dim);background:var(--bg-elev)}
+  .btn .arr{transition:transform .15s}
+  .btn:hover .arr{transform:translateX(2px)}
+
+  /* scroll-reveal (Mastra-style) — applied via IntersectionObserver */
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .55s cubic-bezier(.2,.7,.3,1),transform .55s cubic-bezier(.2,.7,.3,1)}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none}
+  }
+  .stage, .feature, .lane{will-change:transform}
+  .stage:hover, .feature:hover, .lane:hover{transform:translateY(-1px)}
+  /* subtle glow on the hero install bar */
+  .install{box-shadow:0 0 0 1px var(--border-strong),0 20px 60px -20px rgba(125,211,252,.08)}
+  /* interactive button press */
+  .probe-btn{transition:background .12s,border-color .12s,transform .08s}
+  .probe-btn:active:not(:disabled){transform:translateY(1px)}
+
+  /* ── mastra-inspired hover glow on cards (#94) ───────────────────────
+     Subtle cyan halo + 1px lift on .stage / .feature / .lane / .shot
+     hover. Triggered ONLY on hover so static state stays clean. */
+  .stage:hover, .feature:hover, .lane:hover, .shot:hover, .rig-grid figure:hover {
+    box-shadow:
+      0 0 0 1px rgba(125,211,252,.18),
+      0 14px 40px -16px rgba(125,211,252,.18);
+  }
+  .stage, .feature, .lane, .shot, .rig-grid figure {
+    transition: border-color .15s, transform .15s, box-shadow .25s ease-out;
+  }
+
+  /* ── animated cursor on the hero install command (#94) ─────────────
+     Blinking caret after "bash" gives the install bar a "live terminal"
+     feel without typing animation (which would interfere with copy). */
+  #install-cmd::after {
+    content: "▌";
+    color: var(--accent);
+    margin-left: 4px;
+    animation: blinkCursor 1.05s steps(2,start) infinite;
+    opacity: .85;
+  }
+  @keyframes blinkCursor { to { visibility: hidden; } }
+  @media (prefers-reduced-motion:reduce) { #install-cmd::after { animation:none } }
+
+  /* ── floating "drive the rig live" CTA (#94) ─────────────────────────
+     Appears in the bottom-right after the user has scrolled past the hero,
+     hides again when they reach #try (no point linking to where they are). */
+  #floatCta{
+    position:fixed; right:20px; bottom:20px; z-index:30;
+    padding:10px 16px;
+    background:var(--accent); color:var(--accent-ink);
+    border-radius:999px; border:1px solid var(--accent);
+    font-size:14px; font-weight:600;
+    box-shadow:0 14px 40px -10px rgba(125,211,252,.42);
+    transform:translateY(20px); opacity:0; pointer-events:none;
+    transition:transform .35s ease-out, opacity .35s ease-out, background .12s;
+  }
+  #floatCta.show{transform:translateY(0);opacity:1;pointer-events:auto}
+  #floatCta:hover{background:var(--accent-hi)}
+  #floatCta::before{content:"▶";margin-right:6px;font-size:11px}
+  @media (max-width:520px){#floatCta{display:none}}
+
+  /* sections */
+  section{padding:clamp(48px,8vw,72px) 0;border-top:1px solid var(--border)}
+  .sec-eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:500;margin:0 0 12px}
+  .sec-title{font-size:clamp(28px,3.2vw,38px);letter-spacing:-.02em;font-weight:700;margin:0 0 14px;line-height:1.12}
+  .sec-lede{color:var(--text-dim);font-size:17px;max-width:60ch;margin:0 0 44px}
+
+  /* how it works — pipeline */
+  .flow-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:14px}
+  .flow-row.two{grid-template-columns:repeat(2,minmax(0,1fr));max-width:640px}
+  /* Fluid reflow: 5-col → 3-col → 2-col → 1-col as width shrinks. */
+  @media (max-width:1024px){.flow-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media (max-width:768px){.flow-row{grid-template-columns:repeat(2,minmax(0,1fr))}.flow-row.two{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:520px){.flow-row,.flow-row.two{grid-template-columns:1fr}}
+  .stage{background:var(--bg-tile);border:1px solid var(--border);border-radius:var(--radius);padding:18px 16px;position:relative;min-height:118px;transition:border-color .15s,transform .15s}
+  .stage:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+  .stage .num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);letter-spacing:.08em}
+  .stage .name{font-weight:600;font-size:15px;letter-spacing:-.01em;margin:8px 0 6px;color:var(--text)}
+  .stage .desc{font-size:13.5px;color:var(--text-dim);line-height:1.5}
+  .stage.priv{border-style:dashed;border-color:var(--border-strong)}
+  .stage.priv .num{color:var(--accent)}
+  .flow-label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);margin:28px 0 12px}
+
+  /* features — auto-fit lets cards reflow at any width without breakpoint snaps */
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:14px}
+  .feature{background:var(--bg-tile);border:1px solid var(--border);border-radius:var(--radius);padding:22px;transition:border-color .15s}
+  .feature:hover{border-color:var(--border-strong)}
+  .feature h3{font-size:16px;margin:0 0 8px;letter-spacing:-.01em;font-weight:600}
+  .feature p{font-size:14.5px;color:var(--text-dim);margin:0;line-height:1.6}
+  .feature .ico{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:7px;background:rgba(125,211,252,.08);border:1px solid rgba(125,211,252,.18);color:var(--accent);margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500}
+
+  /* video frame */
+  .video-frame{background:var(--bg-tile);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:18px 0 40px;aspect-ratio:16/10}
+  .video-frame video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+  .arch-frame{background:#0f172a;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:18px 0 40px;padding:24px}
+  .arch-frame img{display:block;width:100%;max-width:720px;margin:0 auto;height:auto}
+  .sub-title{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:48px 0 10px;color:var(--text)}
+  /* arm motion proof strip — auto-fit + aspect-ratio so images scale fluidly */
+  .proof-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:14px;margin:18px 0 28px}
+  .proof-strip figure{margin:0;background:var(--bg-tile);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .proof-strip img{display:block;width:100%;aspect-ratio:4/3;max-height:240px;object-fit:cover;background:#000}
+  .proof-strip figcaption{padding:12px 14px;font-size:13.5px;color:var(--text-dim);line-height:1.55}
+  .proof-strip figcaption strong{color:var(--text)}
+  .proof-strip figcaption code{font-size:12.5px}
+
+  /* demo images */
+  .demo-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+  @media (max-width:800px){.demo-grid{grid-template-columns:1fr}}
+  .rig-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:10px}
+  @media (max-width:1024px){.rig-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rig-grid .wide{grid-column:1/-1}}
+  @media (max-width:560px){.rig-grid{grid-template-columns:1fr}.rig-grid .wide{grid-column:auto}}
+  .rig-grid figure{margin:0;background:var(--bg-tile);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
+  /* Fluid image: aspect-ratio scales naturally; max-height caps absurd large viewports */
+  .rig-grid img{display:block;width:100%;aspect-ratio:4/3;max-height:300px;object-fit:cover;background:#000}
+  .rig-grid .wide img{aspect-ratio:16/10;max-height:400px}
+  .rig-grid figcaption{padding:14px 16px 18px;font-size:13.5px;color:var(--text-dim);line-height:1.55;flex:1}
+  .rig-grid figcaption strong{color:var(--text)}
+  .shot{background:var(--bg-tile);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
+  .shot img{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:cover;background:#000}
+  .shot .cap{padding:14px 16px;font-size:13.5px;color:var(--text-dim);border-top:1px solid var(--border)}
+  .shot .cap strong{color:var(--text);font-weight:500}
+
+  /* interactive probe */
+  .live-probe{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  .btn-row{display:flex;flex-wrap:wrap;gap:6px}
+  .probe-btn{appearance:none;-webkit-appearance:none;border:1px solid var(--border-strong);background:var(--accent);color:var(--accent-ink);font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;text-align:left;transition:background .15s,transform .05s;flex:1 1 auto;min-width:0;white-space:nowrap}
+  .probe-btn:hover{background:var(--accent-hi)}
+  .probe-btn:active{transform:translateY(1px)}
+  .probe-btn[disabled]{opacity:.6;cursor:wait}
+  .probe-out{margin:0 !important;max-height:220px;overflow:auto !important;min-height:60px}
+  .probe-out.ok{border-color:#245a32}
+  .probe-out.err{border-color:#5a2424}
+  /* live camera frame rendered from /camera/latest.png blob */
+  .probe-frame{display:none;width:100%;max-width:100%;min-height:240px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#000;object-fit:contain}
+  .probe-frame.visible{display:block;animation:frameFadeIn .28s ease-out both}
+  @keyframes frameFadeIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:none}}
+  .lane-details{margin-top:4px;font-size:13px;color:var(--text-dim)}
+  .lane-details summary{cursor:pointer;user-select:none;padding:6px 0}
+  .lane-details summary::marker{color:var(--text-faint)}
+
+  /* try it — 3-col → 2-col → 1-col reflow at 1024 / 720 px */
+  .try-lanes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
+  @media (max-width:1024px){.try-lanes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:720px){.try-lanes{grid-template-columns:1fr}}
+  .lane{background:var(--bg-tile);border:1px solid var(--border);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:10px}
+  .lane .k{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:.04em}
+  .lane h3{margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em}
+  .lane p{margin:0;color:var(--text-dim);font-size:14px;line-height:1.55}
+  .lane pre{margin:6px 0 0;padding:12px 14px;background:#0b0b0b;border:1px solid var(--border);border-radius:var(--radius-sm);overflow-x:auto;font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:var(--text);max-width:100%}
+  .lane{min-width:0}
+  .lane pre code{display:block;min-width:0}
+  .lane pre code{color:var(--text)}
+  .lane .ep{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--text-dim);word-break:break-all}
+  .lane .ep a{color:var(--accent)}
+
+  /* philosophy — centered 2x2 grid, collapsible cards */
+  .phil{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:1080px;margin:0 auto;align-items:start}
+  @media (max-width:760px){.phil{grid-template-columns:1fr}}
+  .phil .item{padding:22px;background:var(--bg-tile);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:border-color .2s ease,background .2s ease}
+  .phil .item:hover{border-color:var(--accent)}
+  .phil .item .k{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:.04em;margin-bottom:8px}
+  .phil .item h3{margin:0;font-size:16px;letter-spacing:-.01em;font-weight:600}
+  .phil .item .body{max-height:0;opacity:0;overflow:hidden;margin-top:0;transition:max-height .35s ease,opacity .25s ease,margin-top .3s ease}
+  .phil .item:hover .body,.phil .item.expanded .body{max-height:1200px;opacity:1;margin-top:12px}
+  .phil .item p{margin:0 0 10px;color:var(--text-dim);font-size:14.5px;line-height:1.6}
+  .phil .item p:last-child{margin-bottom:0}
+  .phil .item .hint{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);letter-spacing:.04em;margin-top:10px}
+  .phil .item:hover .hint,.phil .item.expanded .hint{display:none}
+
+  /* footer */
+  footer{border-top:1px solid var(--border);padding:40px 0 56px;color:var(--text-faint);font-size:13.5px}
+  footer .wrap{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .footer-meta{display:flex;flex-direction:column;gap:6px;text-align:right;max-width:560px}
+  .footer-thanks{color:var(--text-faint);font-size:12.5px;font-style:italic}
+  .footer-links{margin-top:2px}
+  @media (max-width:680px){
+    .footer-meta{text-align:left}
+  }
+  footer a{color:var(--text-dim)}
+  footer a:hover{color:var(--text)}
+  .footer-brand{display:flex;align-items:center;gap:10px}
+  .footer-brand img{width:18px;height:18px;filter:invert(1);opacity:.85}
+
+  /* live status pill in the nav */
+  .status-pill{display:inline-flex;align-items:center;gap:7px;padding:4px 10px 4px 9px;border-radius:999px;background:rgba(125,211,252,.06);border:1px solid var(--border-strong);font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--text-dim);letter-spacing:.01em;white-space:nowrap;transition:color .15s,border-color .15s,background .15s}
+  .status-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--text-faint);box-shadow:0 0 0 0 rgba(0,0,0,0);transition:background .2s,box-shadow .4s}
+  .status-pill.live{color:var(--text);border-color:rgba(34,197,94,.28);background:rgba(34,197,94,.06)}
+  .status-pill.live .dot{background:#22c55e;animation:pulseDot 2.2s ease-out infinite}
+  .status-pill.offline{color:var(--text-dim);border-color:rgba(239,68,68,.28);background:rgba(239,68,68,.04)}
+  .status-pill.offline .dot{background:#ef4444}
+  @keyframes pulseDot{
+    0%   {box-shadow:0 0 0 0 rgba(34,197,94,.55)}
+    70%  {box-shadow:0 0 0 6px rgba(34,197,94,0)}
+    100% {box-shadow:0 0 0 0 rgba(34,197,94,0)}
+  }
+  @media (max-width:640px){.status-pill{display:none}}
+
+  /* dual-logo cross-fade — used in both nav (.brand) and footer (.footer-brand).
+     Both copies of the logo sit stacked; alpha alternates over an 8s loop.
+     Stays subtle so it reads as "alive" not gimmicky. */
+  .brand, .footer-brand{position:relative}
+  .brand .logo-stack, .footer-brand .logo-stack{position:relative;display:inline-block}
+  .brand .logo-stack{width:22px;height:22px}
+  .footer-brand .logo-stack{width:18px;height:18px}
+  .logo-stack img{position:absolute;inset:0;width:100%;height:100%;filter:invert(1);opacity:.92}
+  .logo-stack img.alt{opacity:0;animation:logoCross 8s ease-in-out infinite}
+  .logo-stack img.base{animation:logoCrossBase 8s ease-in-out infinite}
+  /* Footer flutter offset so the two stacks don't pulse in lockstep */
+  .footer-brand .logo-stack img.alt{animation-delay:-4s}
+  .footer-brand .logo-stack img.base{animation-delay:-4s}
+  @keyframes logoCross     {0%,45%{opacity:0}55%,95%{opacity:.92}100%{opacity:0}}
+  @keyframes logoCrossBase {0%,45%{opacity:.92}55%,95%{opacity:0}100%{opacity:.92}}
+  @media (prefers-reduced-motion:reduce){
+    .logo-stack img.alt{animation:none}
+    .logo-stack img.base{animation:none;opacity:.92}
+  }
+
+  /* utilities */
+  ::selection{background:rgba(125,211,252,.28);color:var(--text)}
+  html{scroll-behavior:smooth}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="#" class="brand">
+      <span class="logo-stack" aria-hidden="true">
+        <img class="base" src="octopus-logo-1.png" alt="">
+        <img class="alt"  src="octopus-logo-2.png" alt="">
+      </span>
+      <span>Octopus</span>
+    </a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#demo">Demo</a>
+      <a href="#try">Try it</a>
+      <a href="#philosophy">Philosophy</a>
+      <a href="slides/">Slides</a>
+      <a href="blog/">Blog</a>
+      <a href="https://github.com/qsimeon/octopus-hw">GitHub</a>
+      <span id="liveStatus" class="status-pill" title="Live status of the Pi bridge. Auto-refreshes every 30 s.">
+        <span class="dot"></span><span class="label">checking…</span>
+      </span>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-text">
+      <span class="eyebrow">MIT MAS.664 &middot; Spring 2026</span>
+      <h1>Universal agentic <span class="accent">hardware control.</span></h1>
+      <p class="lede">
+        Octopus brings embedded hardware to life — automatically.
+      </p>
+      <p class="lede">
+        Plug in a device. Run one command. An AI coding agent reads our specs, figures out
+        what the device is, writes the driver code, and exposes the hardware as an
+        <a href="https://www.anthropic.com/news/model-context-protocol">MCP</a> interface
+        that any AI agent can call.
+      </p>
+      <p class="lede">
+        We don't ship the code. We ship the specs and an agent that writes the code itself
+        — on your machine, for your hardware. A new universal remote that programs itself,
+        instead of asking you to read the manual.
+      </p>
+
+      <div class="install" role="group" aria-label="Install command">
+        <span class="prompt" aria-hidden="true">$</span>
+        <pre id="install-cmd">curl -fsSL https://raw.githubusercontent.com/qsimeon/octopus-hw/main/install.sh | bash</pre>
+        <button type="button" id="copy-btn" aria-label="Copy install command">Copy</button>
+      </div>
+      <p class="install-note">
+        Needs <code>OPENROUTER_API_KEY</code> exported in your shell &mdash; the agent
+        uses it to call models (Gemini 3 Flash, Sonnet, Kimi K2, and others; swap in
+        <code>octopus.toml</code>). Get a key at
+        <a href="https://openrouter.ai/">openrouter.ai</a>.
+        <code>export OPENROUTER_API_KEY=sk-or-...</code> before you run the install.
+      </p>
+
+      <div class="ctas">
+        <a class="btn btn-primary" href="https://github.com/qsimeon/octopus-hw">Get started <span class="arr">&rarr;</span></a>
+        <a class="btn btn-ghost" href="#demo">Watch demo <span class="arr">&rarr;</span></a>
+      </div>
+    </div>
+    <figure class="hero-visual" aria-hidden="true">
+      <img src="demo-frames/hero-renders/nano-nano-cinematic.png" alt="">
+      <img class="hero-overlay" src="demo-frames/hero-renders/nano-nano-blueprint.png" alt="">
+    </figure>
+  </div>
+</header>
+
+<section id="how">
+  <div class="wrap">
+    <p class="sec-eyebrow">How it works</p>
+    <h2 class="sec-title">From &ldquo;plugged in&rdquo; to &ldquo;agent-callable&rdquo; &mdash; five steps.</h2>
+    <p class="sec-lede">
+      Once you run the install command, the agent doesn't do anything magical. It does
+      five things in order, each one writing a file the next step reads. If a step fails,
+      the agent retries &mdash; and on retry it's allowed to rewrite the spec that told it
+      what to do. Most software can't edit its own instructions. Ours can.
+    </p>
+
+    <div class="flow-label">General pipeline</div>
+    <div class="flow-row">
+      <div class="stage">
+        <div class="num">01 &nbsp;/&nbsp; PROBE</div>
+        <div class="name">What's plugged in?</div>
+        <div class="desc">The agent scans the machine for everything connected &mdash; USB, Bluetooth, the local network &mdash; and writes down what it finds.</div>
+      </div>
+      <div class="stage">
+        <div class="num">02 &nbsp;/&nbsp; IDENTIFY</div>
+        <div class="name">What is each device?</div>
+        <div class="desc">For every device, the agent looks up what kind of thing it actually is, what it can do, and what library to talk to it with. It's allowed to web-search.</div>
+      </div>
+      <div class="stage">
+        <div class="num">03 &nbsp;/&nbsp; INTERFACE</div>
+        <div class="name">What functions should an agent see?</div>
+        <div class="desc">The agent designs the function signatures an AI client will need &mdash; one per thing the device can do. These are the &ldquo;tools&rdquo; in MCP.</div>
+      </div>
+      <div class="stage">
+        <div class="num">04 &nbsp;/&nbsp; SERVE</div>
+        <div class="name">Write the wrapper.</div>
+        <div class="desc">The agent writes the Python that actually talks to the hardware and exposes those functions over MCP.</div>
+      </div>
+      <div class="stage">
+        <div class="num">05 &nbsp;/&nbsp; DEPLOY</div>
+        <div class="name">Make it live.</div>
+        <div class="desc">Installs the Python dependencies, starts the server, and writes the snippets you'd paste into Claude Desktop or any MCP client to connect.</div>
+      </div>
+    </div>
+
+    <div class="flow-label">Two extra framework steps for our demo rig</div>
+    <p class="sec-lede" style="margin-top:-4px;font-size:14.5px;color:var(--text-faint)">
+      These only run if the camera and the SO-ARM101 robot arm are plugged in. They give
+      the agent extra context about hardware we demo on a lot, but they're optional &mdash;
+      a fresh install on a machine without these never runs them.
+    </p>
+    <div class="flow-row two">
+      <div class="stage priv">
+        <div class="num">&middot; &nbsp;/&nbsp; PERCEIVE</div>
+        <div class="name">Camera as the agent's eyes</div>
+        <div class="desc">Picks which camera to use and keeps a short visual memory &mdash; current frame, previous frame, a one-line summary of what changed.</div>
+      </div>
+      <div class="stage priv">
+        <div class="num">&middot; &nbsp;/&nbsp; ARM</div>
+        <div class="name">Verify the arm by moving it</div>
+        <div class="desc">Actually moves the arm to verify the generated tool code is correct. If something fails, the agent rewrites the affected piece.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <p class="sec-eyebrow">Features</p>
+    <h2 class="sec-title">The coding agent <em>is</em> the software.</h2>
+    <p class="sec-lede">
+      What's in our repo is five markdown files and a runner. Everything else is generated.
+      That's why one install command does so much, and why the same command does different
+      things on different machines.
+    </p>
+
+    <div class="features">
+      <div class="feature">
+        <div class="ico">M</div>
+        <h3>Model-agnostic</h3>
+        <p>Pick any model that <a href="https://openrouter.ai/">OpenRouter</a> routes to &mdash; Gemini 3 Flash, Sonnet 4.6, Kimi K2, Opus 4.7, and ~6 more. One line in <code>octopus.toml</code>. Set <code>OPENROUTER_API_KEY</code> once, swap whenever.</p>
+      </div>
+      <div class="feature">
+        <div class="ico">H</div>
+        <h3>Hardware-agnostic</h3>
+        <p>If your OS can see the device, the agent figures out the rest. No driver registry, no per-device wiring code in our repo.</p>
+      </div>
+      <div class="feature">
+        <div class="ico">P</div>
+        <h3>Prompts as protocol</h3>
+        <p>The five spec files describe what to do, not how. Same files on Mac, Linux, and Windows (WSL) produce different code that does the same job.</p>
+      </div>
+      <div class="feature">
+        <div class="ico">&#8635;</div>
+        <h3>Self-healing daemon</h3>
+        <p>A background daemon tails the server's logs and asks the agent to patch anything that breaks.</p>
+      </div>
+      <div class="feature">
+        <div class="ico">&#9673;</div>
+        <h3>Self-perception</h3>
+        <p>When a camera is plugged in, the agent uses it as a second mirror &mdash; visually confirming the hardware actually did what it told it to. Self-watching at the hardware layer, paired with the daemon's self-watching at the software layer.</p>
+      </div>
+      <div class="feature">
+        <div class="ico">&#8612;</div>
+        <h3>MCP-compatible</h3>
+        <p>Claude Desktop, ChatGPT desktop, OpenClaw, Claude Code, your local Ollama, our own bridge &mdash; anything that speaks MCP connects to the same URL.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="wrap">
+    <p class="sec-eyebrow">Demo</p>
+    <h2 class="sec-title">From command line to controlling the arm.</h2>
+    <p class="sec-lede">
+      Run one install command on a Pi with hardware plugged in. ~20 minutes later you have an
+      MCP server tailored to whatever you plugged in, with no per-device code in our repo. The
+      clip below runs through that whole flow on our reference rig &mdash; install,
+      Claude Desktop picks up the server, Claude calls a tool, arm moves.
+      <a href="#try">The buttons in the next section</a> drive this same rig live, right now.
+    </p>
+
+    <div class="video-frame">
+      <video autoplay loop muted playsinline preload="metadata"
+             poster="demo-frames/hero-renders/imagen-abstract-tentacles.png">
+        <source src="demo-frames/octopus-final.mp4" type="video/mp4">
+        Your browser doesn't support inline video —
+        <a href="demo-frames/octopus-final.mp4">download the mp4</a>.
+      </video>
+    </div>
+
+    <p class="sec-lede" style="margin-top:18px;font-size:14px;color:var(--text-faint)">
+      ~40 s walkthrough &mdash; Pi install completes, Claude Desktop connects to the public
+      tunnel, arm physically responds.
+    </p>
+
+    <h3 class="sub-title" style="margin-top:56px">How the system builds itself.</h3>
+    <p class="sec-lede">
+      The five spec stages run in order on any platform. If the camera or the arm are detected,
+      two extra framework steps run after &mdash; they give the agent extra context about
+      hardware we demo on a lot. A background daemon then keeps the server healthy by tailing
+      its logs and asking the agent to patch anything that breaks. A single
+      <code>octopus expose</code> command publishes the whole thing over a Cloudflare
+      quick-tunnel, so any MCP client on the public internet can reach it.
+    </p>
+
+    <div class="video-frame">
+      <video autoplay loop muted playsinline preload="metadata">
+        <source src="system-diagrams/architecture-build.mp4" type="video/mp4">
+        <img src="system-diagrams/architecture-simple.svg" alt="Octopus architecture: 5 general specs, 2 privileged steps, daemon, MCP server, public surface"/>
+      </video>
+    </div>
+
+    <div class="rig-grid" style="margin-top:56px">
+      <figure class="shot wide">
+        <img src="demo-frames/rig-full.jpeg" alt="The full rig: SO-ARM101, motorized camera on curved rail, Raspberry Pi">
+        <figcaption><strong>The rig.</strong> 6-DoF SO-ARM101 robot arm (Feetech STS3215 servos),
+        USB webcam on a motorized vertical post on a curved rail, Raspberry Pi 4. The camera can
+        rotate around the arm for multiple viewing angles.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="demo-frames/rig-closeup.jpeg" alt="Closer view of the arm gripper with camera facing it">
+        <figcaption><strong>Closed-loop eye.</strong> The camera looks at the gripper. Every arm
+        command triggers a frame capture, and the agent compares the new frame against the one
+        before it to confirm the hardware actually did what it was told.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="demo-frames/rig-pose.jpeg" alt="Arm in a different pose showing reach">
+        <figcaption><strong>Reach.</strong> Same arm, different pose. All 6 joints exposed as
+        MCP tools (<code>arm_set_joint_angle</code>, <code>arm_home</code>,
+        <code>arm_set_all_joints</code>, plus diagnostics). Zero hand-written hardware code in
+        our repo.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="try">
+  <div class="wrap">
+    <p class="sec-eyebrow">Try it yourself</p>
+    <h2 class="sec-title">Control our hardware from anywhere.</h2>
+    <p class="sec-lede">
+      You don't need a Pi or an arm. The buttons below talk to a real SO-ARM101 in our
+      apartment over a public Cloudflare tunnel &mdash; every click is a real MCP tool call,
+      every camera frame is a real capture. Three ways to connect, depending on what you're
+      building.
+    </p>
+
+    <div class="try-lanes">
+      <div class="lane">
+        <div class="k">01 &nbsp;/&nbsp; CURL / SHELL &mdash; the easiest path</div>
+        <h3>REST bridge via Join39 / Railway</h3>
+        <p>Just an HTTPS POST. Works from any language, any notebook, any shell. No MCP
+        client needed. <strong>The buttons below hit the Pi directly.</strong></p>
+
+        <div class="live-probe">
+          <div class="btn-row">
+            <button id="standUpBtn"   class="probe-btn" type="button">🔌 Stand up</button>
+            <button id="homeBtn"      class="probe-btn" type="button">↺ Arm → rest</button>
+            <button id="waveBtn"      class="probe-btn" type="button">〰 Wave base</button>
+          </div>
+          <div class="btn-row">
+            <button id="gripOpenBtn"  class="probe-btn" type="button">✋ Gripper open</button>
+            <button id="gripCloseBtn" class="probe-btn" type="button">✊ Gripper close</button>
+            <button id="wristBtn"     class="probe-btn" type="button">↻ Wrist roll</button>
+          </div>
+          <div class="btn-row">
+            <button id="railXMinusBtn" class="probe-btn" type="button">◀ Rail X−</button>
+            <button id="railXPlusBtn"  class="probe-btn" type="button">▶ Rail X+</button>
+            <button id="railYMinusBtn" class="probe-btn" type="button">▼ Rail Y−</button>
+            <button id="railYPlusBtn"  class="probe-btn" type="button">▲ Rail Y+</button>
+            <button id="railHomeBtn"   class="probe-btn" type="button">⌂ Rail home</button>
+          </div>
+          <div class="btn-row">
+            <button id="livestreamBtn" class="probe-btn" type="button">▶︎ Live view</button>
+          </div>
+          <pre id="probeOut" class="probe-out"><code>(click any button &mdash; the response shows up below. Every arm command also captures a fresh camera frame, so you can see the arm actually moved.)</code></pre>
+          <img id="probeFrame" class="probe-frame" alt="live capture from the Pi's webcam">
+        </div>
+
+        <details class="lane-details">
+          <summary>curl equivalents</summary>
+          <pre><code># list available tools
+curl -s -X POST https://mellow-miracle-production-b572.up.railway.app/tools/invoke \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"list"}'
+
+# move arm to rest pose
+curl -s -X POST https://mellow-miracle-production-b572.up.railway.app/tools/invoke \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"invoke","tool_name":"arm_home","parameters":{}}'
+
+# grab a fresh camera frame
+curl -s https://mellow-miracle-production-b572.up.railway.app/camera/latest.png \
+  --output frame.png &amp;&amp; open frame.png</code></pre>
+        </details>
+      </div>
+
+      <div class="lane">
+        <div class="k">02 &nbsp;/&nbsp; MCP CLIENT &mdash; the agent-native path</div>
+        <h3>Claude Desktop, Inspector, any MCP client</h3>
+        <p>Connect any client that speaks <a href="https://www.anthropic.com/news/model-context-protocol">MCP</a> &mdash;
+        Claude Desktop, the MCP Inspector, your local Ollama setup, OpenClaw, Claude Code.
+        Your agent gets the typed tool list and calls them directly.</p>
+        <p class="ep">Live tunnel URL (auto-updates from Pi):
+          <code id="liveMcpUrl">loading…</code>
+        </p>
+        <div class="btn-row">
+          <button id="copyClaudeBtn" class="probe-btn" type="button">⧉ Copy Claude Desktop config</button>
+          <button id="copyInspBtn"   class="probe-btn" type="button">🔍 Copy Inspector command</button>
+        </div>
+        <pre id="mcpConfigOut" class="probe-out"><code>(click a button to copy a ready-to-paste config)</code></pre>
+        <details class="lane-details">
+          <summary>what you're pasting</summary>
+          <pre><code id="claudeSnippet">// Claude Desktop → Settings → Connectors → Add custom
+{ "name": "octopus-pi", "url": "LIVE_URL/mcp" }
+
+// OpenClaw / any streamable-http MCP config
+{ "transport": "streamable-http", "url": "LIVE_URL/mcp" }
+
+// Local MCP Inspector (requires Node)
+npx @modelcontextprotocol/inspector LIVE_URL/mcp</code></pre>
+        </details>
+      </div>
+
+      <div class="lane">
+        <div class="k">03 &nbsp;/&nbsp; JOIN39 &mdash; the embedded-in-an-agent path</div>
+        <h3>Agents on join39.org</h3>
+        <p><a href="https://join39.org/">Join39</a> is a marketplace where AI agents
+        discover apps. If you're building an agent there, add
+        <code>octopus-hardware</code> to its app list and your agent can call the arm
+        during conversation. Join39 forwards the call through our bridge to the Pi.</p>
+        <p class="ep">App: <a href="https://join39.org/apps">octopus-hardware</a></p>
+      </div>
+    </div>
+
+    <p class="sec-lede" style="margin-top:18px;font-size:14.5px;color:var(--text-faint)">
+      Note: the Cloudflare tunnel URL rotates whenever the Pi restarts. The Railway bridge
+      URL (used by the buttons in lane 01) is stable &mdash; that's the safer link if
+      you're sharing with someone else.
+    </p>
+  </div>
+</section>
+
+<section id="philosophy">
+  <div class="wrap">
+    <p class="sec-eyebrow">Philosophy</p>
+    <h2 class="sec-title">Four principles that everything else reduces to.</h2>
+    <p class="sec-lede">
+      We landed on eight in our internal <a href="philosophy.md">philosophy doc</a>. These
+      four are the ones that drove every architectural decision in the repo.
+    </p>
+
+    <div class="phil">
+      <div class="item" tabindex="0" role="button" aria-expanded="false">
+        <div class="k">01 &nbsp;/&nbsp; Prompts as protocol &amp; specifications</div>
+        <h3>I = A(S, P)</h3>
+        <div class="body">
+          <p>The five markdown files in <code>protocol/</code> aren't configuration &mdash;
+          they're the program. An <strong>A</strong>gent reads the <strong>S</strong>pecs
+          and acts on the <strong>P</strong>latform in front of it. What comes out &mdash;
+          the running, agent-callable hardware &mdash; is what we call
+          <strong>I</strong>nfrastructure.</p>
+          <p style="margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.04em">I = A(S, P)</p>
+          <p>So the real infrastructure isn't shipped &mdash; it emerges from the agent's
+          interaction with the specs and the machine, constrained by the scaffolding we
+          provide (the orchestrator, RALPH, the principles below). Our repo is small. What
+          it produces on your hardware is the actual product.</p>
+        </div>
+        <span class="hint">hover to expand</span>
+      </div>
+      <div class="item" tabindex="0" role="button" aria-expanded="false">
+        <div class="k">02 &nbsp;/&nbsp; RALPH (Read &middot; Agent &middot; Loop &middot; Pass)</div>
+        <h3>One control structure for the whole system</h3>
+        <div class="body">
+          <p>Every pipeline stage, every daemon tick, every self-heal action is the same
+          four-step loop: read the current state, hand it to the agent, let the agent act,
+          check whether it passed. No other control structures anywhere in the system.
+          Adapted from <a href="https://ghuntley.com/ralph/">Geoffrey Huntley</a>'s RALPH
+          loop &mdash; his version is a coding agent re-prompted with the same goal until
+          it converges; ours is the same spirit but split into four named steps that we
+          re-use across the pipeline, the daemon, and heal.</p>
+        </div>
+        <span class="hint">hover to expand</span>
+      </div>
+      <div class="item" tabindex="0" role="button" aria-expanded="false">
+        <div class="k">03 &nbsp;/&nbsp; Self-reference, two layers</div>
+        <h3>The system observes itself in two distinct ways</h3>
+        <div class="body">
+          <p><strong>Software face:</strong> failed pipeline stages can edit the spec that
+          governs them on retry; the daemon tails its own server's logs and patches what
+          breaks.<br><strong>Hardware face:</strong> the camera watches the arm the agent
+          just moved &mdash; it grounds the system in the physical world by giving the agent
+          a way to see the consequences of its own actions.</p>
+        </div>
+        <span class="hint">hover to expand</span>
+      </div>
+      <div class="item" tabindex="0" role="button" aria-expanded="false">
+        <div class="k">04 &nbsp;/&nbsp; Model calls in place of byzantine code</div>
+        <h3>When the logic is fuzzy, replace the code with a model call</h3>
+        <div class="body">
+          <p>Anywhere we'd normally write tangled, edge-case-heavy logic &mdash; parsing a
+          half-structured device descriptor, mapping a vendor ID through a registry of
+          one-off names, deciding whether a tool's output looks like an error, classifying
+          which kind of failure a log line represents &mdash; we ask the model instead.
+          A short prompt with the input is more honest about the fuzziness than a 200-line
+          if/else tree, and it keeps working when an edge case we never thought of shows
+          up.</p>
+          <p>The narrower instance ("no per-device switch statements") is the most visible
+          one. The general principle: when the logic you're about to write is dirty enough
+          that your enumerated cases will leak, replace the code with a model call.</p>
+        </div>
+        <span class="hint">hover to expand</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-brand">
+      <span class="logo-stack" aria-hidden="true">
+        <img class="base" src="octopus-logo-1.png" alt="">
+        <img class="alt"  src="octopus-logo-2.png" alt="">
+      </span>
+      <span>Octopus &middot; MIT MAS.664 &middot; Spring 2026</span>
+    </div>
+    <div class="footer-meta">
+      <div class="footer-team">
+        Built by
+        <a href="mailto:qsimeon@mit.edu">Quilee Simeon</a> (MIT),
+        <a href="mailto:mwei@fas.harvard.edu">Minggan (Justin) Wei</a> (Harvard), and
+        <a href="mailto:yile_fan@mde.harvard.edu">Yile Fan</a> (Harvard).
+        <br><br>
+        Thanks to our advisors: <strong>Josh Lessing</strong> &amp;
+        <strong>Navid Aghasadeghi</strong> (AI Studio mentors),
+        <strong>Ramesh Raskar</strong> (MIT Media Lab, NANDA),
+        <strong>Ed Boyden</strong> (MIT BCS &amp; BE, HHMI).
+      </div>
+      <div class="footer-links">
+        <a href="https://octopusprotocol.ai/">octopusprotocol.ai</a>
+        &nbsp;&middot;&nbsp;
+        <a href="https://github.com/qsimeon/octopus-hw">github.com/qsimeon/octopus-hw</a>
+        &nbsp;&middot;&nbsp;
+        <a href="blog/">blog</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<a id="floatCta" href="#try" aria-label="Drive the live rig">drive the live rig</a>
+
+<script>
+  /* When framed (octopusprotocol.ai uses frameset-based domain forwarding),
+     external links try to load inside the frame. GitHub sends X-Frame-Options:deny
+     and the click silently fails. Force external links to break out of the frame.
+     No-op when not framed, so qsimeon.github.io and direct opens are unchanged. */
+  (function(){
+    try { if (window.top === window.self) return; } catch (e) { /* cross-origin top, we ARE framed */ }
+    document.querySelectorAll('a[href]').forEach(function(a){
+      var href = a.getAttribute('href') || '';
+      if (/^https?:\/\//i.test(href) && !a.hasAttribute('target')) {
+        a.setAttribute('target', '_top');
+      }
+    });
+  })();
+</script>
+
+<script>
+  /* Floating-CTA visibility: show after user scrolls past hero, hide near #try */
+  (function(){
+    var cta = document.getElementById('floatCta');
+    var trySec = document.getElementById('try');
+    var hero = document.querySelector('header.hero');
+    if (!cta || !trySec || !hero) return;
+    function update(){
+      var heroBottom = hero.getBoundingClientRect().bottom;
+      var tryTop     = trySec.getBoundingClientRect().top;
+      var pastHero   = heroBottom < 60;
+      var atTry      = tryTop < window.innerHeight * 0.6;
+      cta.classList.toggle('show', pastHero && !atTry);
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  })();
+</script>
+
+<script>
+  /* Philosophy cards: click/keyboard toggle for sticky-expand on touch devices */
+  (function(){
+    var items = document.querySelectorAll('.phil .item');
+    items.forEach(function(item){
+      function toggle(){
+        var open = item.classList.toggle('expanded');
+        item.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+      item.addEventListener('click', toggle);
+      item.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+  })();
+</script>
+
+<script>
+  (function(){
+    var btn = document.getElementById('copy-btn');
+    var cmd = document.getElementById('install-cmd');
+    if(!btn || !cmd) return;
+    btn.addEventListener('click', function(){
+      var text = cmd.textContent.trim();
+      var done = function(){
+        var original = 'Copy';
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(function(){ btn.textContent = original; btn.classList.remove('copied'); }, 1600);
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done).catch(function(){ fallback(); });
+      } else { fallback(); }
+      function fallback(){
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); done(); }catch(e){}
+        document.body.removeChild(ta);
+      }
+    });
+  })();
+
+  /* ── Live tunnel status pill in the nav ─────────────────────────────
+       Polls the Railway bridge every 30 s. Shows tool count when live. */
+  (function(){
+    var BRIDGE = 'https://mellow-miracle-production-b572.up.railway.app/discover';
+    var pill = document.getElementById('liveStatus');
+    if (!pill) return;
+    var label = pill.querySelector('.label');
+    async function check(){
+      try {
+        var ctrl = new AbortController();
+        var t = setTimeout(function(){ ctrl.abort(); }, 9000);
+        var res = await fetch(BRIDGE, { signal: ctrl.signal });
+        clearTimeout(t);
+        var d = await res.json();
+        if (d && d.status === 'ok' && typeof d.total_tools === 'number') {
+          pill.classList.remove('offline');
+          pill.classList.add('live');
+          label.textContent = d.total_tools + ' tools live';
+        } else {
+          pill.classList.remove('live');
+          pill.classList.add('offline');
+          label.textContent = 'Pi offline';
+        }
+      } catch (e) {
+        pill.classList.remove('live');
+        pill.classList.add('offline');
+        label.textContent = 'bridge offline';
+      }
+    }
+    check();
+    setInterval(check, 30000);
+  })();
+
+  /* ── Scroll-reveal (Mastra-style) — progressive fade + translate-up on
+       IntersectionObserver. Applied to the major content tiles, respects
+       reduced-motion preference via the CSS media query above. ───────── */
+  (function(){
+    if (!('IntersectionObserver' in window)) return;
+    var targets = document.querySelectorAll(
+      'section h2, section .sec-lede, .stage, .feature, .lane, .shot, .proof-strip figure, .video-frame, .arch-frame'
+    );
+    targets.forEach(function(t,i){
+      t.classList.add('reveal');
+      t.style.transitionDelay = Math.min(i % 5 * 60, 240) + 'ms';
+    });
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -5% 0px' });
+    targets.forEach(function(t){ io.observe(t); });
+  })();
+</script>
+<script>
+(function(){
+  const BRIDGE      = 'https://mellow-miracle-production-b572.up.railway.app';
+  const DISCOVER_URL= BRIDGE + '/discover';
+  const INVOKE_URL  = BRIDGE + '/tools/invoke';
+  // Use the auto-cleaned camera endpoint — bridge applies a gemini i2i
+  // background pass server-side, falls back to raw if gemini is offline.
+  // Bridge picks the first matching tool by default; pass an explicit
+  // hint so we always land on the perception eye (LifeCam, table-level)
+  // and not a witness camera (Brio, often pointed at the room).
+  const CAMERA_URL  = BRIDGE + '/camera/latest-clean.png?tool=lifecam';
+  const out = document.getElementById('probeOut');
+  const frame = document.getElementById('probeFrame');
+
+  /* ── Self-describing live-tool registry ─────────────────────────────────
+     Each control button declares (capability label, candidate tool names).
+     On every /discover poll we refill LIVE_TOOLS and re-validate which
+     buttons have a tool present. Buttons whose tool isn't live get
+     `disabled` + a "rerun pipeline" tooltip. This survives prefix drift
+     (e.g. agent regen producing `so_arm101_arm_*` instead of `arm_*`).
+     LIVE_TOOLS is mirrored on window so the existing status-pill IIFE
+     can also fill it; either source keeps the buttons in sync. */
+  let LIVE_TOOLS = (window.__OCTOPUS_LIVE_TOOLS__ instanceof Set)
+    ? window.__OCTOPUS_LIVE_TOOLS__
+    : new Set();
+  window.__OCTOPUS_LIVE_TOOLS__ = LIVE_TOOLS;
+
+  function resolveTool(spec) {
+    // Returns the first candidate present in LIVE_TOOLS, else null.
+    if (!spec || !Array.isArray(spec.candidates)) return null;
+    for (const name of spec.candidates) if (LIVE_TOOLS.has(name)) return name;
+    return null;
+  }
+  function resolveBoth(spec) {
+    // For two-tool specs (get/set joint angle): null if either is missing.
+    const get = resolveTool({ candidates: spec.getCandidates });
+    const set = resolveTool({ candidates: spec.setCandidates });
+    return (get && set) ? { get, set } : null;
+  }
+  function specReady(spec) {
+    if (spec.always) return true;   // synthetic specs (e.g. local livestream toggle)
+    return spec.kind === 'pair' ? !!resolveBoth(spec) : !!resolveTool(spec);
+  }
+  function applyAvailability() {
+    for (const spec of BUTTON_SPECS) {
+      const btn = document.getElementById(spec.id);
+      if (!btn) continue;
+      if (specReady(spec)) {
+        btn.disabled = false;
+        btn.title = spec.label || '';
+      } else {
+        btn.disabled = true;
+        btn.title = (spec.label || spec.id) + ' — tool missing, rerun pipeline';
+      }
+    }
+  }
+
+  const escapeHtml = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  async function call(body) {
+    // Auto-retry arm tool calls that return {"error": "...", "transient": true}.
+    // The Pi's cdc_acm driver occasionally drops /dev/ttyACM0 and the server
+    // reconnects on the NEXT call, so the user-visible error disappears if we
+    // just try again. Max 2 retries, 1 s apart.
+    async function once() {
+      const ctrl = new AbortController();
+      const t = setTimeout(()=>ctrl.abort(), 25000);
+      const res = await fetch(INVOKE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: ctrl.signal,
+      });
+      clearTimeout(t);
+      return { res, data: await res.json() };
+    }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const out = await once();
+      const inner = firstJsonSafe(out.data);
+      const transient = inner && inner.transient === true;
+      if (!transient) return out;
+      await sleep(800);
+    }
+    return once();
+  }
+  function firstJsonSafe(data) {
+    if (!data || !Array.isArray(data.result) || !data.result.length) return null;
+    try { return JSON.parse(data.result[0]); } catch { return null; }
+  }
+
+  async function showFrame() {
+    try {
+      const sep = CAMERA_URL.includes('?') ? '&' : '?';
+      const res = await fetch(CAMERA_URL + sep + 't=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return { ok: false, reason: 'HTTP ' + res.status };
+      const blob = await res.blob();
+      // Bridge returns image/png on success and application/json on failure;
+      // guard on both blob type AND a minimum byte size so transient 243-byte
+      // error JSONs don't slip through as "image/*" responses.
+      if (!blob.type.startsWith('image/') || blob.size < 5000) {
+        return { ok: false, reason: 'camera busy or offline (' + blob.size + ' B)' };
+      }
+      const prev = frame.src;
+      frame.src = URL.createObjectURL(blob);
+      frame.classList.add('visible');
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, reason: (e.message || String(e)) };
+    }
+  }
+  // Back-compat for callers that checked the old boolean return.
+  async function showFrameBool() { return (await showFrame()).ok; }
+
+  function renderError(res, data, ms, hint) {
+    out.classList.remove('ok'); out.classList.add('err');
+    const detail = (data && (data.error || data.hint)) ? (data.error || data.hint) : JSON.stringify(data, null, 2);
+    out.innerHTML = '<code>HTTP '+res.status+' · '+ms+' ms\n'+escapeHtml(detail)+(hint ? '\n\n'+hint : '')+'</code>';
+  }
+
+  function bind(btnId, fn) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      for (const b of document.querySelectorAll('.probe-btn')) b.disabled = true;
+      const startedAt = Date.now();
+      out.classList.remove('ok','err');
+      out.innerHTML = '<code>calling Pi via Join39 bridge…</code>';
+      frame.classList.remove('visible');
+      try {
+        await fn(startedAt);
+      } catch (e) {
+        out.classList.add('err');
+        out.innerHTML = '<code>request failed: '+escapeHtml(e.message||e)+'</code>';
+      } finally {
+        for (const b of document.querySelectorAll('.probe-btn')) b.disabled = false;
+      }
+    });
+  }
+
+  // List tools — now triggered by clicking the live-status pill in the nav,
+  // not a dedicated button (the button slot got repurposed for Stand up).
+  async function listToolsHandler(startedAt) {
+    const tryItSection = document.getElementById('try');
+    if (tryItSection) tryItSection.scrollIntoView({ behavior: 'smooth' });
+    const { res, data } = await call({ action: 'list' });
+    const ms = Date.now() - startedAt;
+    if (data.status === 'ok' && Array.isArray(data.tools)) {
+      const tools = data.tools.map(t => '  • '+t.name).join('\n');
+      out.classList.remove('err'); out.classList.add('ok');
+      out.innerHTML = '<code>HTTP '+res.status+' · '+ms+' ms · '+data.total_tools+' tools live\n\n'+escapeHtml(tools)+'</code>';
+    } else {
+      renderError(res, data, ms, 'The Pi/tunnel may be offline. The bridge returned its error honestly.');
+    }
+  }
+  // Wire the live-tools pill in the nav as the trigger.
+  (function bindStatusPill() {
+    const pill = document.getElementById('liveStatus');
+    if (!pill) return;
+    pill.style.cursor = 'pointer';
+    pill.title = (pill.title || '') + ' — click to list all live tools';
+    pill.addEventListener('click', () => {
+      const t0 = Date.now();
+      for (const b of document.querySelectorAll('.probe-btn')) b.disabled = true;
+      listToolsHandler(t0).finally(() => {
+        for (const b of document.querySelectorAll('.probe-btn')) b.disabled = false;
+      });
+    });
+  })();
+
+  // Simple single-joint command + settle + capture helper. Takes resolved
+  // tool names so it survives prefix drift (e.g. arm_* vs so_arm101_arm_*).
+  async function driveJoint(getTool, setTool, joint, angle, label, startedAt) {
+    const b = await call({ action: 'invoke', tool_name: getTool,
+                           parameters: { joint } });
+    const before = firstJson(b.data);
+    const c = await call({ action: 'invoke', tool_name: setTool,
+                           parameters: { joint, angle } });
+    await sleep(1400);
+    const a = await call({ action: 'invoke', tool_name: getTool,
+                           parameters: { joint } });
+    const after = firstJson(a.data);
+    const ms = Date.now() - startedAt;
+    let lines = [label, `  commanded: joint ${joint} → ${angle}°`];
+    // The arm thermal-rest cycle returns {error: "Arm is busy ...", transient: true}
+    // instead of the standard {raw, angle_deg, ...} shape. Detect that explicitly
+    // so we don't render "undefined → undefined" for what's actually a known
+    // protocol-level back-off signal.
+    function pos(p) { return (p && typeof p.raw === 'number') ? p.raw : null; }
+    const beforeRaw = pos(before);
+    const afterRaw  = pos(after);
+    const transient = (before && before.transient) || (after && after.transient) ||
+                      (c && c.data && firstJson(c.data) && firstJson(c.data).transient);
+    if (transient) {
+      lines.push('  arm thermally resting (joints 2/3 cooling down).');
+      lines.push('  non-thermal joints stay usable; retry shortly.');
+      out.classList.add('err');
+    } else if (beforeRaw != null && afterRaw != null) {
+      const dr = afterRaw - beforeRaw;
+      lines.push(`  raw ${beforeRaw} → ${afterRaw}  (Δ${dr >= 0 ? '+' : ''}${dr})`);
+      out.classList.add(Math.abs(dr) > 30 ? 'ok' : 'err');
+    } else {
+      lines.push('  read failed (no raw field in response — see /tools/invoke_raw)');
+      out.classList.add('err');
+    }
+    out.innerHTML = '<code>' + ms + ' ms · ' + escapeHtml(lines.join('\n')) + '\n\ncapturing fresh frame…</code>';
+    await sleep(2000);
+    const fr = await showFrame();
+    if (fr.ok) {
+      out.innerHTML += '<code>\n\n↑ live frame — ' + new Date().toLocaleTimeString() + '</code>';
+    } else {
+      out.innerHTML += '<code>\n\n(camera: ' + escapeHtml(fr.reason) + ')</code>';
+    }
+  }
+
+  // Render a friendly short-circuit message when a button's tool isn't live
+  // (covers the time window between pipeline regen and a successful poll).
+  function renderToolMissing(spec) {
+    out.classList.remove('ok'); out.classList.add('err');
+    const tried = (spec.candidates || spec.getCandidates || []).concat(spec.setCandidates || []).join(', ');
+    out.innerHTML = '<code>' + escapeHtml(spec.label || spec.id)
+                  + ' — tool not live\n\ntried: ' + escapeHtml(tried)
+                  + '\n\nrerun the pipeline (octopus run) so the bridge picks up the regenerated tool name.</code>';
+  }
+
+  // Diagnose — no longer used by any button after the Apr-24 pipeline regen
+  // (arm_diagnostic tool was consolidated into arm_read_status). The binding
+  // stays dormant; if a diagBtn is re-added later the handler is here.
+  // eslint-disable-next-line
+  async function _legacyDiagnose(startedAt) {
+    const { res, data } = await call({ action: 'invoke',
+        tool_name: 'so_arm101_arm_diagnostic', parameters: {} });
+    const ms = Date.now() - startedAt;
+    const d = firstJson(data);
+    const fmt = (v, suffix, scale = 1) => (v == null ? '—' : (v * scale).toFixed(0) + suffix);
+    if (d && d.motors) {
+      const rows = Object.entries(d.motors).map(([id, m]) => {
+        const t    = fmt(m.temperature_c, '°C');
+        const v    = fmt(m.voltage_mv, 'V', 0.001);  // mV -> V
+        const load = (m.load == null ? '—' : 'load=' + m.load);
+        const raw  = (m.position_raw == null ? '—' : 'raw=' + m.position_raw);
+        const flag = (m.temperature_c != null && m.temperature_c > 55) ? '  🔥' : '';
+        const over = m.overloaded ? '  OVERLOAD' : '';
+        return `  motor ${id}: ${t}  ${v}  ${load}  ${raw}${flag}${over}`;
+      }).join('\n');
+      const bus = d.bus_voltage_mv != null ? (d.bus_voltage_mv / 1000).toFixed(1) + 'V' : '—';
+      out.classList.add('ok');
+      out.innerHTML = '<code>HTTP '+res.status+' · '+ms+' ms · diagnostic'
+                    + '\n\nbus: '+bus+' | arm_alive: '+d.arm_alive+' | port: '+(d.port || '—')
+                    + '\n\n'+escapeHtml(rows)+'</code>';
+    } else if (d) {
+      out.classList.add('ok');
+      out.innerHTML = '<code>HTTP '+res.status+' · '+ms+' ms\n\n'+escapeHtml(JSON.stringify(d, null, 2))+'</code>';
+    } else {
+      renderError(res, data, ms, 'arm_diagnostic returned unexpected shape.');
+    }
+  }
+
+  // Helper — pull the first JSON payload out of an MCP tool result array.
+  function firstJson(data) {
+    if (!data || !Array.isArray(data.result) || !data.result.length) return null;
+    try { return JSON.parse(data.result[0]); } catch (_) { return null; }
+  }
+
+  /* ── Self-describing button registry ───────────────────────────────────
+     Each spec declares the button id, a human label, the candidate tool
+     names (first match wins), and the handler. Handlers re-resolve their
+     tools at click-time so a bridge that just came online (or a regen
+     that switched prefix) works without a page reload. */
+  const ARM_HOME_CANDIDATES    = ['arm_home',              'so_arm101_arm_home'];
+  const ARM_REST_CANDIDATES    = ['arm_rest',              'so_arm101_arm_rest'];
+  const ARM_STATUS_CANDIDATES  = ['arm_read_status',       'so_arm101_arm_read_status'];
+  const ARM_GET_CANDIDATES     = ['arm_get_joint_angle',   'so_arm101_arm_get_joint_angle'];
+  const ARM_SET_CANDIDATES     = ['arm_set_joint_angle',   'so_arm101_arm_set_joint_angle'];
+  const ARM_SET_ALL_CANDIDATES = ['arm_set_all_joints',    'so_arm101_arm_set_all_joints'];
+  const RAIL_X_CANDIDATES      = ['rail_move_x',           'rail_x',                 'camera_rail_move_x'];
+  const RAIL_Y_CANDIDATES      = ['rail_move_y',           'rail_y',                 'camera_rail_move_y'];
+  const RAIL_HOME_CANDIDATES   = ['rail_home',             'camera_rail_home'];
+
+  const BUTTON_SPECS = [
+    {
+      id: 'homeBtn', label: 'Arm → rest pose',
+      candidates: ARM_HOME_CANDIDATES,
+      async handler(spec, startedAt) {
+        const tool = resolveTool(spec);
+        if (!tool) return renderToolMissing(spec);
+        const { res, data } = await call({ action: 'invoke', tool_name: tool, parameters: {} });
+        const ms = Date.now() - startedAt;
+        if (data.status === 'ok') {
+          const inner = Array.isArray(data.result) ? data.result.join('\n') : JSON.stringify(data, null, 2);
+          out.classList.add('ok');
+          out.innerHTML = '<code>HTTP '+res.status+' · '+ms+' ms · arm → rest pose\n\n'+escapeHtml(inner)+'\n\ncapturing fresh frame…</code>';
+          await sleep(2000);
+          const frameRes = await showFrame();
+          if (frameRes.ok) {
+            out.innerHTML += '<code>\n\n↑ live frame — arm as of '+new Date().toLocaleTimeString()+'</code>';
+          } else {
+            out.innerHTML += '<code>\n\n(camera: '+escapeHtml(frameRes.reason)+' — click Capture frame to retry)</code>';
+          }
+        } else {
+          renderError(res, data, ms, 'The arm tool call failed. Check if the tunnel + Railway env are up-to-date.');
+        }
+      },
+    },
+    {
+      id: 'waveBtn', label: 'Wave base rotation', kind: 'pair',
+      getCandidates: ARM_GET_CANDIDATES, setCandidates: ARM_SET_CANDIDATES,
+      async handler(spec, startedAt) {
+        const tools = resolveBoth(spec);
+        if (!tools) return renderToolMissing(spec);
+        // step_angle is in degrees fed to set_joint_angle; joint 1 has a
+        // wide range so 80/160/120 is a clearly visible L-R-center sweep.
+        const seq = [
+          { joint: 1, angle: 160, label: 'base → right' },
+          { joint: 1, angle:  80, label: 'base → left' },
+          { joint: 1, angle: 120, label: 'base → center' },
+        ];
+        let lines = ['waving base rotation (joint 1) through 3 positions …'];
+        let totalDelta = 0;
+        for (const step of seq) {
+          const b = await call({ action: 'invoke', tool_name: tools.get,
+                                 parameters: { joint: 1 } });
+          const before = firstJson(b.data);
+          const setRes = await call({ action: 'invoke', tool_name: tools.set, parameters: step });
+          const setData = firstJson(setRes.data);
+          // Joint 1 is hardware-disabled on the demo rig (broken servo swap).
+          // arm_set_joint_angle returns {"status":"skipped",...} for it; surface
+          // that honestly instead of attempting motion checks on a dead joint.
+          if (setData && setData.status === 'skipped') {
+            const ms = Date.now() - startedAt;
+            out.classList.remove('err');
+            out.classList.add('ok');
+            const jn = setData.joint_name || 'shoulder_pan';
+            const reason = setData.reason || 'disabled in demo rig';
+            out.innerHTML = '<code>' + ms + ' ms · base rotation\n\n'
+                          + escapeHtml(`joint 1 (${jn}) is ${reason} — no-op by design.`)
+                          + '\n\n(try Wrist roll, Stand up, or Gripper open to see motion.)</code>';
+            return;
+          }
+          await sleep(1400);
+          const a = await call({ action: 'invoke', tool_name: tools.get,
+                                 parameters: { joint: 1 } });
+          const after = firstJson(a.data);
+          const bRaw = (before && typeof before.raw === 'number') ? before.raw : null;
+          const aRaw = (after  && typeof after.raw  === 'number') ? after.raw  : null;
+          if (before && before.transient || after && after.transient) {
+            lines.push(`${step.label}: arm thermally resting (try again in 90s)`);
+          } else if (bRaw != null && aRaw != null) {
+            const dr = aRaw - bRaw;
+            totalDelta += Math.abs(dr);
+            lines.push(`${step.label} (target ${step.angle}°):`
+                     + `  raw ${bRaw}→${aRaw}  (Δ${dr>=0?'+':''}${dr})`);
+          } else {
+            lines.push(`${step.label}: read failed (no raw field in response)`);
+          }
+        }
+        const ms = Date.now() - startedAt;
+        out.classList.add(totalDelta > 50 ? 'ok' : 'err');
+        const verdict = totalDelta > 50
+          ? '✓ arm physically moved (cumulative raw delta: ' + totalDelta + ')'
+          : '⚠ commanded but no motion detected (motor stuck/overheated?)';
+        out.innerHTML = '<code>' + ms + ' ms · 3-step base-rotation wave\n\n'
+                      + escapeHtml(lines.join('\n'))
+                      + '\n\n' + verdict
+                      + '\n\ncapturing fresh frame…</code>';
+        await sleep(2000);
+        const frameRes = await showFrame();
+        if (frameRes.ok) {
+          out.innerHTML += '<code>\n\n↑ live frame — ' + new Date().toLocaleTimeString() + '</code>';
+        } else {
+          out.innerHTML += '<code>\n\n(camera: ' + escapeHtml(frameRes.reason) + ' — arm motion above is what matters)</code>';
+        }
+      },
+    },
+    {
+      id: 'readBtn', label: 'Read joints',
+      candidates: ARM_STATUS_CANDIDATES,
+      async handler(spec, startedAt) {
+        const tool = resolveTool(spec);
+        if (!tool) return renderToolMissing(spec);
+        const { res, data } = await call({ action: 'invoke', tool_name: tool, parameters: {} });
+        const ms = Date.now() - startedAt;
+        const parsed = firstJson(data);
+        // Server may return { joints: { shoulder_pan: {...} } } or { 1: {...}, 2: {...} }.
+        const joints = parsed && (parsed.joints || parsed.status || null);
+        if (joints && typeof joints === 'object') {
+          const rows = Object.entries(joints).map(([name, s]) => {
+            if (typeof s !== 'object' || s === null) return null;
+            const raw  = s.position_raw  ?? s.raw ?? '—';
+            const deg  = s.position_deg  ?? s.angle ?? '—';
+            const temp = s.temperature_c ?? s.temp ?? null;
+            const over = s.overloaded || s.overload ? ' OVERLOAD' : '';
+            const heat = (typeof temp === 'number' && temp > 55) ? '  🔥' : '';
+            return `  ${String(name).padEnd(14)} raw=${raw}  deg=${deg}°${heat}${over}`;
+          }).filter(Boolean).join('\n');
+          out.classList.add('ok');
+          out.innerHTML = '<code>HTTP ' + res.status + ' · ' + ms + ' ms · arm status\n\n'
+                        + escapeHtml(rows) + '</code>';
+        } else if (parsed) {
+          out.classList.add('ok');
+          out.innerHTML = '<code>HTTP ' + res.status + ' · ' + ms + ' ms\n\n'
+                        + escapeHtml(JSON.stringify(parsed, null, 2)) + '</code>';
+        } else {
+          renderError(res, data, ms, 'Reading arm status failed.');
+        }
+      },
+    },
+    // Stand up — multi-joint sequence. Empirical (April 2026 probe) mapping:
+    //   shoulder_lift +30° = ~25° tilt up from horizontal (raw ~2560)
+    //   elbow_flex -40° folds the forearm back (raw ~1366) so the arm
+    //     looks "tall" rather than "outstretched"
+    //   gripper +100° opens jaws cleanly (raw ~2884)
+    // The bad version (90° / 180°) drove elbow to range-max → arm fully
+    // extended horizontally instead of standing up.
+    {
+      id: 'standUpBtn', label: 'Stand up', kind: 'pair',
+      getCandidates: ARM_GET_CANDIDATES, setCandidates: ARM_SET_CANDIDATES,
+      async handler(spec, startedAt) {
+        const tools = resolveBoth(spec);
+        if (!tools) return renderToolMissing(spec);
+        out.classList.remove('err','ok');
+        out.innerHTML = '<code>standing up — shoulder up, elbow folded, gripper open …</code>';
+        const seq = [
+          { joint: 3, angle: -40, label: 'elbow_flex → fold'         },
+          { joint: 2, angle:  30, label: 'shoulder_lift → tilt up'   },
+          { joint: 6, angle: 100, label: 'gripper → open'            },
+        ];
+        const lines = ['standing up sequence:'];
+        for (const step of seq) {
+          await call({ action: 'invoke', tool_name: tools.set, parameters: step });
+          await sleep(900);
+          const a = await call({ action: 'invoke', tool_name: tools.get,
+                                 parameters: { joint: step.joint } });
+          const after = firstJson(a.data);
+          const raw = (after && typeof after.raw === 'number') ? after.raw : '?';
+          if (after && after.transient) {
+            lines.push(`  ${step.label}: thermally resting (joint cool-down)`);
+          } else {
+            lines.push(`  ${step.label} (${step.angle}°): raw=${raw}`);
+          }
+        }
+        const ms = Date.now() - startedAt;
+        out.classList.add('ok');
+        out.innerHTML = '<code>' + ms + ' ms · stand up\n\n' + escapeHtml(lines.join('\n'))
+                      + '\n\ncapturing fresh frame…</code>';
+        await sleep(2000);
+        const frameRes = await showFrame();
+        if (frameRes.ok) {
+          out.innerHTML += '<code>\n\n↑ live frame — ' + new Date().toLocaleTimeString() + '</code>';
+        }
+      },
+    },
+    // Gripper open / close. set_joint_angle maps degrees onto raw such that
+    // low angle = high raw = jaws OPEN, high angle = low raw = jaws CLOSED.
+    {
+      id: 'gripOpenBtn', label: 'Gripper open', kind: 'pair',
+      getCandidates: ARM_GET_CANDIDATES, setCandidates: ARM_SET_CANDIDATES,
+      async handler(spec, startedAt) {
+        const tools = resolveBoth(spec);
+        if (!tools) return renderToolMissing(spec);
+        await driveJoint(tools.get, tools.set, 6, 210, 'gripper → open', startedAt);
+      },
+    },
+    {
+      id: 'gripCloseBtn', label: 'Gripper close', kind: 'pair',
+      getCandidates: ARM_GET_CANDIDATES, setCandidates: ARM_SET_CANDIDATES,
+      async handler(spec, startedAt) {
+        const tools = resolveBoth(spec);
+        if (!tools) return renderToolMissing(spec);
+        await driveJoint(tools.get, tools.set, 6, 30, 'gripper → close', startedAt);
+      },
+    },
+    {
+      id: 'wristBtn', label: 'Wrist roll', kind: 'pair',
+      getCandidates: ARM_GET_CANDIDATES, setCandidates: ARM_SET_CANDIDATES,
+      async handler(spec, startedAt) {
+        const tools = resolveBoth(spec);
+        if (!tools) return renderToolMissing(spec);
+        // Go to one extreme then the other so motion is clearly visible.
+        await driveJoint(tools.get, tools.set, 5, 200, 'wrist roll → right', startedAt);
+        await sleep(400);
+        await driveJoint(tools.get, tools.set, 5,  40, 'wrist roll → left',  startedAt);
+      },
+    },
+    // ── Camera rail ──────────────────────────────────────────────────────
+    // Direct rail control. Each press moves the rail by a fixed step count
+    // (open-loop steppers, no position feedback). Buttons gray out when
+    // rail tools are not present in /discover (rail not wired this install).
+    ...['railXMinusBtn:rail X−:RAIL_X:-200', 'railXPlusBtn:rail X+:RAIL_X:200',
+        'railYMinusBtn:rail Y−:RAIL_Y:-150', 'railYPlusBtn:rail Y+:RAIL_Y:150'
+    ].map(s => {
+      const [id, label, axis, stepStr] = s.split(':');
+      const steps = parseInt(stepStr, 10);
+      const candidates = (axis === 'RAIL_X') ? RAIL_X_CANDIDATES : RAIL_Y_CANDIDATES;
+      return {
+        id, label, candidates,
+        async handler(spec, startedAt) {
+          const tool = resolveTool(spec);
+          if (!tool) return renderToolMissing(spec);
+          out.classList.remove('err','ok');
+          out.innerHTML = '<code>' + label + ' (' + steps + ' steps) …</code>';
+          const r = await call({ action: 'invoke', tool_name: tool, parameters: { steps } });
+          const ms = Date.now() - startedAt;
+          out.classList.add(r.ok ? 'ok' : 'err');
+          out.innerHTML = '<code>' + ms + ' ms · ' + label + '\n\n' + escapeHtml(r.data || '') + '</code>';
+        },
+      };
+    }),
+    {
+      id: 'railHomeBtn', label: 'Rail home',
+      candidates: RAIL_HOME_CANDIDATES,
+      async handler(spec, startedAt) {
+        const tool = resolveTool(spec);
+        if (!tool) return renderToolMissing(spec);
+        out.classList.remove('err','ok');
+        out.innerHTML = '<code>rail homing …</code>';
+        const r = await call({ action: 'invoke', tool_name: tool, parameters: {} });
+        const ms = Date.now() - startedAt;
+        out.classList.add(r.ok ? 'ok' : 'err');
+        out.innerHTML = '<code>' + ms + ' ms · rail home\n\n' + escapeHtml(r.data || '') + '</code>';
+      },
+    },
+    // ── Live view ────────────────────────────────────────────────────────
+    // Toggles a 2-second poll of /camera/latest-clean.png so the user can
+    // watch the arm in real time without spamming individual capture clicks.
+    {
+      id: 'livestreamBtn', label: 'Live view',
+      candidates: ['__livestream_local__'],   // synthetic; always available
+      always: true,
+      async handler(spec, startedAt) {
+        const btn = document.getElementById('livestreamBtn');
+        const frame = document.getElementById('probeFrame');
+        if (window._octopusLivestream) {
+          clearInterval(window._octopusLivestream);
+          window._octopusLivestream = null;
+          btn.textContent = '▶︎ Live view';
+          out.classList.remove('err','ok');
+          out.innerHTML = '<code>live view stopped.</code>';
+          return;
+        }
+        btn.textContent = '■ Stop live';
+        out.classList.remove('err','ok');
+        out.innerHTML = '<code>live view ON · polling every 2 s …</code>';
+        const tick = () => {
+          frame.src = (window.OCTOPUS_BRIDGE || 'https://mellow-miracle-production-b572.up.railway.app')
+                    + '/camera/latest-clean.png?t=' + Date.now();
+          frame.style.display = 'block';
+        };
+        tick();
+        window._octopusLivestream = setInterval(tick, 2000);
+      },
+    },
+  ];
+
+  // Wire each spec to its DOM button via the shared bind() guard.
+  BUTTON_SPECS.forEach(spec => {
+    bind(spec.id, (startedAt) => spec.handler(spec, startedAt));
+  });
+
+  /* ── Live-tool poll ────────────────────────────────────────────────────
+     Mirrors the status-pill IIFE's /discover poll but also refills the
+     LIVE_TOOLS set and calls applyAvailability() so disabled state stays
+     in sync with the bridge. Polls on load + every 30 s. */
+  async function refreshLiveTools() {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 9000);
+      const res = await fetch(DISCOVER_URL, { signal: ctrl.signal });
+      clearTimeout(t);
+      const d = await res.json();
+      if (d && d.status === 'ok' && Array.isArray(d.tools)) {
+        LIVE_TOOLS = new Set(d.tools.map(tt => tt.name));
+        window.__OCTOPUS_LIVE_TOOLS__ = LIVE_TOOLS;
+        applyAvailability();
+        return true;
+      }
+    } catch (_) { /* fall through to offline branch below */ }
+    // Bridge unreachable — disable everything with a clearer tooltip.
+    LIVE_TOOLS = new Set();
+    window.__OCTOPUS_LIVE_TOOLS__ = LIVE_TOOLS;
+    for (const spec of BUTTON_SPECS) {
+      const btn = document.getElementById(spec.id);
+      if (!btn) continue;
+      btn.disabled = true;
+      btn.title = (spec.label || spec.id) + ' — bridge offline, try again in 30 s';
+    }
+    return false;
+  }
+
+  // Initial-load gate: disable until first /discover lands so a user can't
+  // click before we know which tool names are live.
+  for (const spec of BUTTON_SPECS) {
+    const btn = document.getElementById(spec.id);
+    if (btn) { btn.disabled = true; btn.title = (spec.label || spec.id) + ' — checking bridge…'; }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', refreshLiveTools);
+  } else {
+    refreshLiveTools();
+  }
+  setInterval(refreshLiveTools, 30000);
+
+  // ---- Lane 02: live tunnel URL + copy buttons ---------------------------
+  let LIVE_MCP = null;
+  const liveUrlEl = document.getElementById('liveMcpUrl');
+  const mcpOut    = document.getElementById('mcpConfigOut');
+  const snipEl    = document.getElementById('claudeSnippet');
+
+  async function refreshLiveUrl() {
+    try {
+      const res = await fetch(BRIDGE + '/discover', { method: 'GET' });
+      const d = await res.json();
+      if (d.status === 'ok' && d.mcp_server) {
+        LIVE_MCP = d.mcp_server.replace(/\/+$/, '');
+        const pretty = LIVE_MCP.replace(/^https?:\/\//, '');
+        if (liveUrlEl) liveUrlEl.textContent = pretty;
+        if (snipEl) snipEl.textContent = snipEl.textContent.replace(/LIVE_URL/g, LIVE_MCP.replace(/\/mcp$/, ''));
+      } else if (liveUrlEl) {
+        liveUrlEl.textContent = '(tunnel offline — check /discover)';
+      }
+    } catch (_) {
+      if (liveUrlEl) liveUrlEl.textContent = '(bridge offline)';
+    }
+  }
+  refreshLiveUrl();
+
+  async function copyToClipboard(text, label) {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (mcpOut) {
+        mcpOut.classList.remove('err'); mcpOut.classList.add('ok');
+        mcpOut.innerHTML = '<code>✓ '+label+' copied ('+text.length+' chars)\n\n'+escapeHtml(text)+'</code>';
+      }
+    } catch (e) {
+      if (mcpOut) {
+        mcpOut.classList.remove('ok'); mcpOut.classList.add('err');
+        mcpOut.innerHTML = '<code>clipboard blocked — select and copy manually:\n\n'+escapeHtml(text)+'</code>';
+      }
+    }
+  }
+
+  const copyClaude = document.getElementById('copyClaudeBtn');
+  if (copyClaude) copyClaude.addEventListener('click', () => {
+    if (!LIVE_MCP) return copyToClipboard('(tunnel URL not yet loaded — click again in a second)', 'tunnel URL');
+    const base = LIVE_MCP.endsWith('/mcp') ? LIVE_MCP : LIVE_MCP + '/mcp';
+    const snippet = '{\n  "name": "octopus-pi",\n  "url": "' + base + '"\n}';
+    copyToClipboard(snippet, 'Claude Desktop connector');
+  });
+
+  const copyInsp = document.getElementById('copyInspBtn');
+  if (copyInsp) copyInsp.addEventListener('click', () => {
+    if (!LIVE_MCP) return copyToClipboard('(tunnel URL not yet loaded — click again in a second)', 'inspector command');
+    const base = LIVE_MCP.endsWith('/mcp') ? LIVE_MCP : LIVE_MCP + '/mcp';
+    const cmd = 'npx @modelcontextprotocol/inspector ' + base;
+    copyToClipboard(cmd, 'Inspector command');
+  });
+
+  // (Removed standalone Capture-frame button: every arm-control click already
+  //  triggers an auto-fetch of /camera/latest.png after motion settles, so a
+  //  dedicated capture button was redundant.)
+})();
+</script>
+</body>
+</html>

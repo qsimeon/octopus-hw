@@ -1,0 +1,9 @@
+flask>=3.0
+httpx>=0.27
+mcp>=1.20
+# autocontrast preprocessing for camera frames before gemini i2i
+pillow>=10.0
+# v3.6.0 — 2026-05-03 — autocontrast restored after Phase G+ premature
+#   removal. LifeCam still over-saturates in apartment daylight; without
+#   the pre-pass gemini sees a white image and generates plausible content
+#   instead of editing the actual scene.

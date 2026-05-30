@@ -1,0 +1,76 @@
+# Octopus Protocol — Configuration
+# Override these values to customize the pipeline.
+
+[agent]
+command = "pi"                                                # HARNESS: coding agent CLI (pi, amp, opencode)
+model = "openrouter/google/gemini-3-flash-preview"           # BRAIN: installer default (Gemini 3 Flash — fast, cheap, fits Pi 3 within 200s/stage budget)
+light_model = "openrouter/google/gemini-3-flash-preview"     # Light model for summaries (alternatives: openrouter/anthropic/claude-haiku-4.5 for higher quality at moderate cost)
+max_attempts = 3                                              # Retries per stage
+stage_budget_sec = 900                                        # 15 min total per stage. Mac probe + premium models need room for Continuity Camera + Bluetooth + audio enumeration.
+stage_attempt_timeout_sec = 300                               # 5 min per attempt; ~3 attempts ≈ stage_budget_sec. Pi 3 + non-Flash models can't fit serve.md output in 200s.
+
+# ── Model presets — OpenRouter only ───────────────────────────────────────────
+# Octopus is OpenRouter-only. One key (OPENROUTER_API_KEY) powers the curated
+# set below. The installer's interactive menu is the canonical chooser; this
+# list mirrors it for direct toml editing. Slugs follow OpenRouter's
+# {provider}/{model-id} convention — re-verify at openrouter.ai/models if any
+# begin returning 404.
+#
+#  command = "pi"  model = "openrouter/moonshotai/kimi-k2.6"            # Kimi K2.6
+#  command = "pi"  model = "openrouter/anthropic/claude-sonnet-4.6"     # Sonnet 4.6 — strongest spec-following but too slow for Pi 3 within default 200s budget
+#  command = "pi"  model = "openrouter/google/gemini-3-flash-preview"   # Gemini 3 Flash Preview — INSTALLER DEFAULT (speed-first; works on Pi 3)
+#  command = "pi"  model = "openrouter/deepseek/deepseek-v3.2"          # DeepSeek V3.2
+#  command = "pi"  model = "openrouter/anthropic/claude-opus-4.7"       # Opus 4.7 (priciest)
+#  command = "pi"  model = "openrouter/stepfun/step-3.5-flash"          # Step 3.5 Flash
+#  command = "pi"  model = "openrouter/minimax/minimax-m2.7"            # MiniMax M2.7
+#  command = "pi"  model = "openrouter/deepseek/deepseek-v4-flash"      # DeepSeek V4 Flash
+#  command = "pi"  model = "openrouter/x-ai/grok-4.1-fast"              # Grok 4.1 Fast
+#  command = "pi"  model = "openrouter/tencent/hy3-preview:free"        # Hy3 Preview (FREE tier)
+#
+# Legacy direct-provider paths (Anthropic, Google, ZAI direct, Bedrock) were
+# all dropped from the installer. OPENROUTER_API_KEY is the only key Octopus
+# needs.
+
+[output]
+dir = "_generated"
+log = "_generated/octopus.log"
+
+[stages]
+order = ["probe", "identify", "interface", "serve", "deploy"]
+
+[daemon]
+watch_interval = 300           # Seconds between health checks (5 min)
+
+[perception]
+# The perception subsystem covers BOTH camera selection AND the camera rail.
+# The camera is mounted on the rail and the rail is the perception actuator,
+# so they're one privileged step, one config section.
+enabled = true                 # Perceive stage runs after the general pipeline.
+capture_interval = 300         # Seconds between daemon heartbeat captures (5 min)
+frame_dir = "perceive/frames"  # Relative to _generated/
+max_frames = 2                 # Keep current + last frame; older frames summarised into state_summary.txt
+expected_camera = "Microsoft LifeCam Studio"   # Preferred perception camera.
+                                               # Rail-mounted webcam, not the static Brio.
+                                               # Substring match against discovered camera tools.
+                                               # Brio is a fallback if LifeCam is missing.
+rail_step_pulse_us = 800       # Stepper pulse half-period (tested-safe rate).
+                               # 300-1500 us is the safe range. Lower = faster.
+
+[arm]
+enabled = true                 # Arm stage verifies/patches arm tools if an arm is discovered.
+                               # Set false to skip (e.g. non-demo installs).
+                               # When enabled the spec mandates two invariants in the
+                               # generated server: (1) the serial port is opened LAZILY
+                               # via a `_get_arm()` getter (NOT at module import — keeps
+                               # FastMCP boot-clean when the arm is unplugged); (2) NO
+                               # SYNC WRITE / GroupSyncWrite — the STS3215 firmware on
+                               # this rig only honours individual write_word per servo.
+expected_arm = "SO-ARM101"     # Demo hardware: identify a USB-serial device as this arm if found.
+                               # Set to "" on installs without a robotic arm.
+                               # NOTE: servo #1 (base rotation) is hardware-disabled in
+                               # the demo rig (broken motor swapped from #3); generated
+                               # tools no-op joint 1.
+
+# Rail config lives under [perception] — see rail_step_pulse_us above.
+# A legacy [rail] table is read for backwards compatibility by the
+# orchestrator (it ignores `enabled`).
